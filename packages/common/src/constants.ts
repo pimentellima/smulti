@@ -1,0 +1,2 @@
+export const S3_URL_EXPIRES_IN_SECONDS = 10
+export const MAX_CONCURRENT_JOBS = 10
