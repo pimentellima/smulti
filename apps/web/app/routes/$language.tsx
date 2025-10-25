@@ -59,7 +59,7 @@ export default function HomePage() {
     const { dehydratedState } = useLoaderData() as Awaited<
         ReturnType<typeof loader>
     >
-    const dictionary = loadDictionary()
+    const dictionary = loadDictionary(locale)
 
     const [pageError, setPageError] = useState<string | undefined>()
 
@@ -91,7 +91,7 @@ export default function HomePage() {
                         {pageError && (
                             <Alert variant="destructive" className="mt-4">
                                 <AlertTitle>
-                                    {dictionary.error.title}
+                                    {dictionary.error.default}
                                 </AlertTitle>
                                 <AlertDescription>{pageError}</AlertDescription>
                             </Alert>

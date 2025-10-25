@@ -103,7 +103,7 @@ export async function createRequest() {
 }
 
 export async function createJobs(
-    jobs: Job[],
+    jobs: InferInsertModel<typeof jobsTable>[],
     tx?: DatabaseType,
 ): Promise<Job[]> {
     const database = tx || db

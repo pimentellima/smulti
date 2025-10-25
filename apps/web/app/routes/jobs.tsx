@@ -14,14 +14,11 @@ import { createJobsSchema } from '@/common/zod/job'
 
 export async function action({ request }: Route.ActionArgs) {
     try {
-        console.log('Received request in /jobs action')
         if (request.method === 'POST') {
             const body = await request.json()
             const postJobsData = createJobsSchema.parse(body)
-            console.log(postJobsData)
             const requestId =
                 postJobsData.requestId ?? (await createRequest()).id
-            console.log('Request ID:', requestId)
             const urls = postJobsData.urls
             const jobs = await createJobs(
                 urls.map((url) => ({
@@ -42,11 +39,9 @@ export async function action({ request }: Route.ActionArgs) {
             await batchUpdateJobStatus(jobsToProcess, 'queued-processing')
 
             const result = await addJobsToProcessQueue(jobsToProcess)
-
-            const erroredJobs =
-                result.Failed?.map((f) => f.Id).filter(
-                    (id): id is string => typeof id === 'string',
-                ) || []
+            const erroredJobs = result
+                .filter((r) => r.status === 'rejected')
+                .map((r) => r.reason.id)
             await batchUpdateJobStatus(erroredJobs, 'error-processing')
 
             return { requestId }
@@ -56,6 +51,7 @@ export async function action({ request }: Route.ActionArgs) {
             message: 'Method Not Allowed',
         })
     } catch (e) {
-        handleApiError(e)
+        console.log(e)
+        return handleApiError(e)
     }
 }

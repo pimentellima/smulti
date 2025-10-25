@@ -18,6 +18,6 @@ export async function action({ request, params }: any) {
             message: 'Method Not Allowed',
         })
     } catch (e) {
-        handleApiError(e)
+        return handleApiError(e)
     }
 }

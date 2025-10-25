@@ -6,6 +6,10 @@ import {
 } from '@tanstack/react-query'
 import type { CreateJobsSchema, RetryJobsSchema } from '@/common/zod/job'
 import type { JobWithFormats } from '@/common/types'
+import { ApiError, handleApiError, type ErrorResponse } from '@/common/errors'
+import { useLocale } from './locale'
+import { loadDictionary } from '@/lib/dictionaries/load-dictionary'
+import { handleApiResponse } from '@/lib/utils/handle-api-response'
 
 export function useJobs(requestId: string | null) {
     return useQuery<JobWithFormats[]>({
@@ -24,25 +28,20 @@ export function useJobs(requestId: string | null) {
 
 export function useCreateJobs() {
     const queryClient = useQueryClient()
+    const locale = useLocale()
+    const dict = loadDictionary(locale)
 
     return useMutation<{ requestId: string }, unknown, CreateJobsSchema>({
-        mutationFn: async (data: CreateJobsSchema) => {
-            console.log(data)
-            const response = await fetch(`/jobs`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
-            console.log(response)
-            if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.error || 'Failed to process links')
-            }
-
-            return await response.json()
-        },
+        mutationFn: async (jobs: CreateJobsSchema) =>
+            handleApiResponse(
+                await fetch(`/jobs`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(jobs),
+                }),
+            ),
         onSuccess: async (data) => {
             await queryClient.invalidateQueries({
                 queryKey: ['jobs', data.requestId],

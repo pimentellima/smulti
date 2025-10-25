@@ -1,0 +1,21 @@
+[project]
+name = "lambda-handler"
+version = "0.1.0"
+requires-python = "==3.11.*"
+
+# Suas dependências (equivalente ao requirements.txt)
+dependencies = [
+    psycopg2-binary==2.9.9
+    yt-dlp==2025.06.25
+    ffmpeg
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+]
+
+[build-system]
+requires = ["uv>=0.4.0"]
+build-backend = "uv.build"

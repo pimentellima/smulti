@@ -5,6 +5,14 @@
 
 declare module "sst" {
   export interface Resource {
+    "ProcessQueue": {
+      "type": "sst.aws.Queue"
+      "url": string
+    }
+    "SQSProcessorFunction": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "SmultiApp": {
       "type": "sst.aws.React"
       "url": string
@@ -12,6 +20,9 @@ declare module "sst" {
     "SmultiBucket": {
       "name": string
       "type": "sst.aws.Bucket"
+    }
+    "SmultiVPC": {
+      "type": "sst.aws.Vpc"
     }
   }
 }

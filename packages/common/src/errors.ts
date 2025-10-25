@@ -38,7 +38,7 @@ export const httpStatusToErrorCode = Object.fromEntries(
 
 const ErrorResponseSchema = z.object({
     error: z.object({
-        code: z.string(),
+        code: ErrorCode,
         message: z.string(),
     }),
 })

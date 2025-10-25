@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useLocale } from '../hooks/locale'
+import { ApiError } from '@/common/errors'
 
 const formDictionary = {
     'en-US': {
@@ -14,7 +15,6 @@ const formDictionary = {
         processing: 'Processing',
         errors: {
             emptyLinks: 'Please enter at least one valid link',
-            invalidLinks: 'All links must be valid URLs',
         },
     },
     'pt-BR': {
@@ -24,7 +24,6 @@ const formDictionary = {
         processing: 'Processando',
         errors: {
             emptyLinks: 'Por favor, insira pelo menos um link válido ',
-            invalidLinks: 'Todos os links devem ser URLs válidas ',
         },
     },
 }
@@ -61,9 +60,8 @@ export default function SubmitLinksForm({
                 requestId,
             },
             {
-                onError: (err) => {
-                    setPageError?.(formDictionary[locale].errors.invalidLinks)
-                    console.error('Error processing links:', err)
+                onError: (err: any) => {
+                    setPageError(err.message || 'An unexpected error occurred')
                 },
             },
         )

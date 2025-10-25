@@ -1,0 +1,5 @@
+{
+    "name": "@smulti/process-worker",
+    "private": true,
+    "type": "module"
+}

@@ -81,11 +81,28 @@ export const dictionary = {
             },
         ],
     },
+    error: {
+        default: 'An unexpected error occurred. Please try again later.',
+        unprocessable_entity:
+            'The provided links are invalid. Please check and try again.',
+        not_found: 'The requested resource was not found.',
+        internal_server_error:
+            'An unexpected error occurred. Please try again later.',
+        bad_request:
+            'Bad request. Please check the provided data and try again.',
+        unauthorized: 'Unauthorized. Please log in to access this resource.',
+        forbidden: 'You do not have permission to perform this action.',
+        exceeded_limit:
+            'You have exceeded the allowed limit. Please try again later.',
+        conflict: 'A conflict occurred with the current state of the resource.',
+        invite_pending: 'This invite is still pending and cannot be used yet.',
+        invite_expired:
+            'This invite has expired. Request a new one to continue.',
+        rate_limit_exceeded:
+            'Rate limit exceeded. Slow down and try again shortly.',
+    },
     footer: {
         disclaimer:
             'Use responsibly and only download content you have permission to access.',
-    },
-    error: {
-        title: 'Error',
     },
 }
