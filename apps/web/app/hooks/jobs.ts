@@ -4,7 +4,6 @@ import {
     useQueryClient,
     queryOptions,
 } from '@tanstack/react-query'
-import { getJobsByRequestId } from '@/core/api'
 import type { CreateJobsSchema, RetryJobsSchema } from '@/common/zod/job'
 import type { JobWithFormats } from '@/common/types'
 

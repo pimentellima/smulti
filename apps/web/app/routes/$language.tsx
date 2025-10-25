@@ -24,13 +24,12 @@ import {
     CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getJobsByRequestId } from '@/core/api'
 import type { Locale } from '@/common/locale'
 import { Clock, Download, Music, Shield } from 'lucide-react'
 import { Suspense, useState } from 'react'
 import { useLoaderData, useParams, type LoaderFunctionArgs } from 'react-router'
 import { loadDictionary } from '@/lib/dictionaries/load-dictionary'
-
+import { getJobsByRequestId } from '@/core/api'
 export function meta({}: any) {
     return [
         { title: 'Smulti' },
@@ -41,11 +40,15 @@ export function meta({}: any) {
 export async function loader({ request, params }: LoaderFunctionArgs) {
     const url = new URL(request.url)
     const requestId = url.searchParams.get('requestId') || undefined
-    const dictionary = await loadDictionary(params.locale as Locale)
 
     const queryClient = new QueryClient()
+    if (requestId) {
+        await queryClient.prefetchQuery({
+            queryKey: ['jobs', requestId],
+            queryFn: () => getJobsByRequestId(requestId),
+        })
+    }
     return {
-        dictionary,
         requestId,
         dehydratedState: dehydrate(queryClient),
     }
@@ -53,8 +56,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 export default function HomePage() {
     const locale = useParams().locale as Locale
-    const { dictionary, requestId, dehydratedState } =
-        useLoaderData() as Awaited<ReturnType<typeof loader>>
+    const { dehydratedState } = useLoaderData() as Awaited<
+        ReturnType<typeof loader>
+    >
+    const dictionary = loadDictionary()
 
     const [pageError, setPageError] = useState<string | undefined>()
 
