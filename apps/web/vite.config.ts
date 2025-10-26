@@ -4,5 +4,12 @@ import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
+    build: {
+        rollupOptions: {
+            treeshake: {
+                moduleSideEffects: 'no-external',
+            },
+        },
+    },
     plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
 })
