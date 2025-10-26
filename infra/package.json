@@ -1,0 +1,26 @@
+{
+    "name": "@smulti/infra",
+    "private": true,
+    "bin": {
+        "infra": "bin/infra.js"
+    },
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc -w",
+        "test": "jest",
+        "cdk": "cdk",
+        "cdk-synth": "cdk synth",
+        "cdk-deploy": "cdk deploy"
+    },
+    "dependencies": {
+        "aws-cdk-lib": "^2.221.0",
+        "construct": "^1.0.0",
+        "constructs": "^10.3.0",
+        "dotenv": "^16.4.5",
+        "source-map-support": "^0.5.21"
+    },
+    "devDependencies": {
+        "@types/node": "^22.7.2",
+        "typescript": "^5.5.4"
+    }
+}

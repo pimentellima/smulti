@@ -4,13 +4,11 @@ import {
     SendMessageBatchCommand,
     SendMessageCommand,
 } from '@aws-sdk/client-sqs'
-import { Resource } from 'sst/resource'
 
 const client = new SQSClient({})
 
 export async function addJobsToProcessQueue(jobIds: string[]) {
-    const ProcessQueueUrl = Resource.ProcessQueue.url
-    console.log('ProcessQueueUrl', ProcessQueueUrl)
+    const ProcessQueueUrl = ''
     return await Promise.allSettled(
         jobIds.map(async (id) => {
             return new Promise<{ id: string }>(async (resolve, reject) => {
@@ -34,7 +32,6 @@ export async function addJobsToProcessQueue(jobIds: string[]) {
 }
 
 export async function addMergedFormatToConvertQueue(mergedFormatId: string) {
-    // const PrepareQueueUrl = Resource.PrepareConversionQueue.url
     const PrepareQueueUrl = ''
 
     try {

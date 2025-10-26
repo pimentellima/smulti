@@ -1,21 +1,22 @@
 {
-  "name": "smulti",
-  "version": "0.0.0",
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
-  "scripts": {
-    "build": "next build && echo 'Build complete'",
-    "dev": "npm exec -ws -- npm run dev --if-present"
-  },
-  "devDependencies": {
-    "@tsconfig/node22": "^22",
-    "@types/aws-lambda": "8.10.156",
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "sst": "3.17.21",
-    "typescript": "^5.8.3"
-  }
+    "name": "smulti",
+    "version": "0.0.0",
+    "workspaces": [
+        "packages/*",
+        "apps/*",
+        "infra/*"
+    ],
+    "scripts": {
+        "build": "next build && echo 'Build complete'",
+        "dev": "npm exec -ws -- npm run dev --if-present",
+        "deploy": "npm install && npm run build && cd infra && npm install && npm run cdk-synth && npm run cdk-deploy"
+    },
+    "devDependencies": {
+        "@tsconfig/node22": "^22",
+        "@types/aws-lambda": "8.10.156",
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "typescript": "^5.8.3"
+    }
 }

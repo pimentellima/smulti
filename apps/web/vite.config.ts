@@ -3,13 +3,13 @@ import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
     build: {
-        rollupOptions: {
-            treeshake: {
-                moduleSideEffects: 'no-external',
-            },
-        },
+        rollupOptions: isSsrBuild
+            ? {
+                  input: './serverless.ts',
+              }
+            : undefined,
     },
     plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
-})
+}))

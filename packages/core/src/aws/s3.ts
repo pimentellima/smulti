@@ -7,7 +7,6 @@ import { PassThrough } from 'stream'
 const client = new S3Client({})
 
 export async function uploadFromStream(key: string, pass: PassThrough) {
-    // const bucket = Resource.MyBucket.name
     const bucket = ''
     const upload = new Upload({
         client,
