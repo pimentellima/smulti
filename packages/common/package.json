@@ -5,8 +5,7 @@
     "type": "module",
     "scripts": {
         "build": "tsc",
-        "check-types": "tsc --noEmit",
-        "dev": "tsx watch -r tsconfig-paths/register src/index.ts"
+        "check-types": "tsc --noEmit"
     },
     "main": "./src/index.ts",
     "types": "./src/index.ts",

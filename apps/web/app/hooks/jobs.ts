@@ -2,11 +2,9 @@ import {
     useQuery,
     useMutation,
     useQueryClient,
-    queryOptions,
 } from '@tanstack/react-query'
 import type { CreateJobsSchema, RetryJobsSchema } from '@/common/zod/job'
 import type { JobWithFormats } from '@/common/types'
-import { ApiError, handleApiError, type ErrorResponse } from '@/common/errors'
 import { useLocale } from './locale'
 import { loadDictionary } from '@/lib/dictionaries/load-dictionary'
 import { handleApiResponse } from '@/lib/utils/handle-api-response'

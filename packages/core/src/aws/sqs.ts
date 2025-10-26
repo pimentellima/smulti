@@ -4,12 +4,13 @@ import {
     SendMessageBatchCommand,
     SendMessageCommand,
 } from '@aws-sdk/client-sqs'
-import { Resource } from 'sst'
+import { Resource } from 'sst/resource'
 
 const client = new SQSClient({})
 
 export async function addJobsToProcessQueue(jobIds: string[]) {
-    const ProcessQueueUrl = Resource.SmultiApp.url
+    const ProcessQueueUrl = Resource.ProcessQueue.url
+    console.log('ProcessQueueUrl', ProcessQueueUrl)
     return await Promise.allSettled(
         jobIds.map(async (id) => {
             return new Promise<{ id: string }>(async (resolve, reject) => {

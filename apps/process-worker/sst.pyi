@@ -6,18 +6,16 @@ class Resource:
     class App:
         name: str
         stage: str
+    class Bucket:
+        name: str
+        type: str
     class ProcessQueue:
         type: str
         url: str
-    class SQSProcessorFunction:
+    class ProcessWorker:
         name: str
         type: str
-    class SmultiApp:
+    class WebApp:
         type: str
         url: str
-    class SmultiBucket:
-        name: str
-        type: str
-    class SmultiVPC:
-        type: str
 

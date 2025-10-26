@@ -6,7 +6,8 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "sst dev"
+    "build": "next build && echo 'Build complete'",
+    "dev": "npm exec -ws -- npm run dev --if-present"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22",

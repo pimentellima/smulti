@@ -2,9 +2,6 @@
     "name": "@smulti/core",
     "version": "1.0.0",
     "type": "module",
-    "scripts": {
-        "test": "sst shell vitest"
-    },
     "types": "./src/index.ts",
     "exports": {
         "./*": [

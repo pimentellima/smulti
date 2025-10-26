@@ -1,6 +1,5 @@
-import type { InferSelectModel } from 'drizzle-orm'
 import { z } from 'zod'
-import { formats, jobStatusEnum, mergedFormatsStatusEnum } from '@/db/schema'
+import { jobStatusEnum, mergedFormatsStatusEnum } from '@/db/schema'
 
 export const createJobsSchema = z.object({
     requestId: z.string().uuid().nullish(),
@@ -10,7 +9,9 @@ export const createJobsSchema = z.object({
 export const statusSchema = z.enum(jobStatusEnum.enumValues)
 export type JobStatusSchema = z.infer<typeof statusSchema>
 
-export const mergedFormatStatusSchema = z.enum(mergedFormatsStatusEnum.enumValues)
+export const mergedFormatStatusSchema = z.enum(
+    mergedFormatsStatusEnum.enumValues,
+)
 export type ConvertFormatStatus = z.infer<typeof mergedFormatStatusSchema>
 
 export const downloadJobByRequestSchema = z.object({
@@ -37,7 +38,7 @@ export const retryJobsSchema = z
         (val) => (val.ids && !val.requestId) || (!val.ids && val.requestId),
         {
             message: 'Either ids or requestId is required, but not both',
-        }
+        },
     )
 
 export type RetryJobsSchema = z.infer<typeof retryJobsSchema>
