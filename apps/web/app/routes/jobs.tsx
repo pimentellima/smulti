@@ -1,16 +1,14 @@
+import { MAX_CONCURRENT_JOBS } from '@/common/constants'
 import { ApiError, handleApiError } from '@/common/errors'
-import { z } from 'zod'
+import { createJobsSchema } from '@/common/zod/job'
 import {
     batchUpdateJobStatus,
     createJobs,
     createRequest,
-    getItemsInQueueCount,
-    getJobsByRequestId,
+    getItemsInQueueCount
 } from '@/core/api'
-import type { Route } from './+types/jobs'
-import { MAX_CONCURRENT_JOBS } from '@/common/constants'
 import { addJobsToProcessQueue } from '@/core/aws/sqs'
-import { createJobsSchema } from '@/common/zod/job'
+import type { Route } from './+types/jobs'
 
 export async function action({ request }: Route.ActionArgs) {
     try {
