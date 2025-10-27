@@ -4,4 +4,9 @@ import * as cdk from 'aws-cdk-lib'
 import { DeployStack } from '../lib/app-stack'
 
 const app = new cdk.App()
-new DeployStack(app, 'SmultiDeployStack')
+new DeployStack(app, 'SmultiDeployStack', {
+    env: {
+        account: '412381757672',
+        region: 'us-east-1',
+    },
+})

@@ -1,1 +1,6 @@
-{}
+{
+  "hosted-zone:account=412381757672:domainName=smultidownloader.com:region=us-east-1": {
+    "Id": "/hostedzone/Z02027892J98VGIG18CBP",
+    "Name": "smultidownloader.com."
+  }
+}

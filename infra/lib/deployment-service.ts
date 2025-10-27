@@ -28,12 +28,20 @@ import {
 import { resolve } from 'path'
 import {
     CanonicalUserPrincipal,
+    ManagedPolicy,
     PolicyDocument,
     PolicyStatement,
+    Role,
+    ServicePrincipal,
 } from 'aws-cdk-lib/aws-iam'
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations'
 import { HttpApi } from 'aws-cdk-lib/aws-apigatewayv2'
-import { ARecord, HostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53'
+import {
+    AaaaRecord,
+    ARecord,
+    HostedZone,
+    RecordTarget,
+} from 'aws-cdk-lib/aws-route53'
 import {
     Certificate,
     ValidationMethod,
@@ -47,7 +55,6 @@ import { config } from 'dotenv'
 config({ path: resolve(__dirname, '../../.env') })
 
 interface MyStackProps extends StackProps {
-    region: string
     apiName: string
 }
 
@@ -87,11 +94,30 @@ export class DeploymentService extends Construct {
 
         // Deploy SSR Lambda e criação de Api Gateway
 
+        const ssrRole = new Role(this, 'SsrLambdaRole', {
+            assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+            description:
+                'Role for SSR Lambda with access to environment resources',
+            managedPolicies: [
+                ManagedPolicy.fromAwsManagedPolicyName(
+                    'service-role/AWSLambdaBasicExecutionRole',
+                ),
+
+                ManagedPolicy.fromAwsManagedPolicyName(
+                    'AmazonS3ReadOnlyAccess',
+                ),
+                ManagedPolicy.fromAwsManagedPolicyName(
+                    'SecretsManagerReadWrite',
+                ),
+            ],
+        })
+
         const ssr = new NodejsFunction(this, 'SsrServerFunction', {
             runtime: Runtime.NODEJS_20_X,
             entry: resolve(__dirname, '../../apps/web/server.js'),
             handler: 'handler',
             timeout: Duration.seconds(29),
+            role: ssrRole,
             environment: {
                 S3_STATIC_BUCKET_NAME: process.env.S3_STATIC_BUCKET_NAME!,
                 S3_UPLOADS_BUCKET_NAME: process.env.S3_UPLOADS_BUCKET_NAME!,
@@ -134,15 +160,17 @@ export class DeploymentService extends Construct {
             'Cert',
             'arn:aws:acm:us-east-1:412381757672:certificate/53ba8653-7430-4efe-8ab0-d74eba277eb8',
         )
+
         const distribution = new Distribution(this, 'CloudfrontDistribution', {
             defaultBehavior: {
                 origin: new HttpOrigin(
-                    `${httpApi.apiId}.execute-api.${props.region}.amazonaws.com`,
+                    `${httpApi.apiId}.execute-api.${process.env.AWS_REGION}.amazonaws.com`,
                 ),
                 allowedMethods: AllowedMethods.ALLOW_ALL,
                 viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             },
             certificate,
+            domainNames: ['www.smultidownloader.com', 'smultidownloader.com'],
             additionalBehaviors: {
                 'assets/*': {
                     origin: staticAssetsOrigin,
@@ -163,6 +191,35 @@ export class DeploymentService extends Construct {
                         ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 },
             },
+        })
+
+        // A zona precisa ser criada no Route53 antes do deploy
+        const zone = HostedZone.fromLookup(this, 'HostedZone', {
+            domainName: 'smultidownloader.com',
+        })
+
+        new ARecord(this, 'RootAlias', {
+            zone,
+            recordName: '@',
+            target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
+        })
+
+        new AaaaRecord(this, 'RootAliasIPv6', {
+            zone,
+            recordName: '@',
+            target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
+        })
+
+        new ARecord(this, 'WwwAlias', {
+            zone,
+            recordName: 'www',
+            target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
+        })
+
+        new AaaaRecord(this, 'WwwAliasIPv6', {
+            zone,
+            recordName: 'www',
+            target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         })
 
         // Fila SQS

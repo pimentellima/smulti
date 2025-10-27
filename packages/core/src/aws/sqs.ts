@@ -6,14 +6,22 @@ import {
     SendMessageCommand,
 } from '@aws-sdk/client-sqs'
 
-const client = new SQSClient({})
+const client = new SQSClient({
+    region: process.env.AWS_REGION!,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+})
 
 export async function addJobsToProcessQueue(jobIds: string[]) {
+    console.log({ queue: process.env.SQS_PROCESS_QUEUE_NAME })
     const { QueueUrl } = await client.send(
         new GetQueueUrlCommand({
             QueueName: process.env.SQS_PROCESS_QUEUE_NAME!,
         }),
     )
+    console.log({ QueueUrl })
     return await Promise.allSettled(
         jobIds.map(async (id) => {
             return new Promise<{ id: string }>(async (resolve, reject) => {
