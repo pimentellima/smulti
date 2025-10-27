@@ -1,4 +1,4 @@
-import type { Format } from './zod/job'
+import type { Format } from './types'
 
 export function matchAudioFormatForVideo(
     format: Format,
