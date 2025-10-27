@@ -15,11 +15,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import {
-    ChevronLeft,
-    ChevronRight,
-    Loader2
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { useLocale } from '../hooks/locale'
 
 type JobFormatInfo = {
@@ -29,7 +25,7 @@ type JobFormatInfo = {
 
 interface LinksTableProps {
     data: JobWithFormats[]
-    columns: ColumnDef<JobWithFormats>[],
+    columns: ColumnDef<JobWithFormats>[]
     isLoading: boolean
 }
 
@@ -50,11 +46,7 @@ const tableDictionary = {
     },
 }
 
-export function JobsTable({
-    data,
-    columns,
-    isLoading,
-}: LinksTableProps) {
+export function JobsTable({ data, columns, isLoading }: LinksTableProps) {
     const locale = useLocale()
     const dictionary = tableDictionary[locale] || tableDictionary['en-US']
 

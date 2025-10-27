@@ -48,7 +48,6 @@ export default function Downloader() {
 
     const { data: jobs, isLoading: isLoadingJobs } = useJobs(requestId)
     const { mutate: retryProcessing } = useRetryJob()
-    const { mutate: cancelJob } = useCancelJob()
 
     const canDownloadCount = (jobs || []).filter(
         (job) => job.status === 'finished-processing',
