@@ -219,7 +219,7 @@ export class DeploymentService extends Construct {
             this,
             'ProcessFunction',
             {
-                functionName: 'smulti-process-worker',
+                timeout: Duration.minutes(1),
                 code: DockerImageCode.fromImageAsset(
                     resolve(__dirname, '../../functions/process-worker'),
                     {
