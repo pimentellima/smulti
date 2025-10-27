@@ -74,7 +74,7 @@ export class DeploymentService extends Construct {
         // Bucket de uploads com acesso público permitido
         const uploadsBucket = new Bucket(this, 'UploadsBucket', {
             bucketName: process.env.S3_UPLOADS_BUCKET_NAME!,
-            removalPolicy: RemovalPolicy.RETAIN,
+            removalPolicy: RemovalPolicy.DESTROY,
             autoDeleteObjects: false,
             publicReadAccess: true,
             blockPublicAccess: BlockPublicAccess.BLOCK_ACLS_ONLY,
