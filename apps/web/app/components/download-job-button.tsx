@@ -55,10 +55,8 @@ export default function DownloadJobButton({
         return (
             <Button
                 title={dictionary[locale].selectFormat}
-                size={'icon'}
                 variant={'outline'}
                 disabled
-                asChild
             >
                 <DownloadIcon className="h-4 w-4" />
             </Button>
@@ -68,14 +66,12 @@ export default function DownloadJobButton({
     if (isError)
         return (
             <Button
-                size={'icon'}
                 variant={'destructive'}
                 title={dictionary[locale]['error-try-again']}
                 className="group relative"
                 onClick={onClickRetry}
             >
                 <CircleAlert className="absolute group-hover:opacity-0 transition-opacity h-4 w-4" />
-
                 <DownloadIcon
                     className={`absolute h-4 w-4 transition-opacity opacity-0 group-hover:opacity-100`}
                 />
@@ -100,7 +96,6 @@ export default function DownloadJobButton({
         return (
             <Button
                 title={dictionary[locale].download}
-                size={'icon'}
                 variant={'outline'}
                 asChild
             >
@@ -119,7 +114,6 @@ export default function DownloadJobButton({
     return (
         <Button
             title={dictionary[locale].unsupportedFormat}
-            size={'icon'}
             variant={'outline'}
             disabled
             asChild
