@@ -62,8 +62,7 @@ export class DeploymentService extends Construct {
     constructor(scope: Construct, id: string, props: MyStackProps) {
         super(scope, id)
 
-        // Definição de Buckets S3
-
+        // Bucket de estáticos do front end com acesso público desabilitado
         const staticAssetsBucket = new Bucket(this, 'StaticAssetsBucket', {
             bucketName: process.env.S3_STATIC_BUCKET_NAME!,
             removalPolicy: RemovalPolicy.DESTROY,
@@ -72,6 +71,7 @@ export class DeploymentService extends Construct {
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
         })
 
+        // Bucket de uploads com acesso público permitido
         const uploadsBucket = new Bucket(this, 'UploadsBucket', {
             bucketName: process.env.S3_UPLOADS_BUCKET_NAME!,
             removalPolicy: RemovalPolicy.RETAIN,
@@ -80,6 +80,7 @@ export class DeploymentService extends Construct {
             blockPublicAccess: BlockPublicAccess.BLOCK_ACLS_ONLY,
         })
 
+        // Origem CloudFront para o bucket de estáticos com acesso via OriginAccessIdentity
         const oai = new OriginAccessIdentity(
             this,
             'StaticAssetsAccessIdentity',
@@ -92,8 +93,7 @@ export class DeploymentService extends Construct {
             originAccessIdentity: oai,
         })
 
-        // Deploy SSR Lambda e criação de Api Gateway
-
+        // Role do lambda para o SSR com acesso aos recursos necessários
         const ssrRole = new Role(this, 'SsrLambdaRole', {
             assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
             description:
@@ -111,7 +111,7 @@ export class DeploymentService extends Construct {
                 ),
             ],
         })
-
+        // Bundling e deploy da função Lambda do app web SSR
         const ssr = new NodejsFunction(this, 'SsrServerFunction', {
             runtime: Runtime.NODEJS_20_X,
             entry: resolve(__dirname, '../../apps/web/server.js'),
@@ -133,11 +133,13 @@ export class DeploymentService extends Construct {
             },
         })
 
-        const integration = new HttpLambdaIntegration('SsrHttpIntegration', ssr)
-
+        // Api gateway integrada com o lambda SSR
         const httpApi = new HttpApi(this, 'SsrHttpApi', {
             apiName: props.apiName,
-            defaultIntegration: integration,
+            defaultIntegration: new HttpLambdaIntegration(
+                'SsrHttpIntegration',
+                ssr,
+            ),
             createDefaultStage: true,
         })
 
@@ -153,14 +155,14 @@ export class DeploymentService extends Construct {
             enableAcceptEncodingGzip: true,
         })
 
-        // Distribuição CloudFront
-
+        // Certificado emitido no ACM para usar no CloudFront
         const certificate = Certificate.fromCertificateArn(
             this,
             'Cert',
             'arn:aws:acm:us-east-1:412381757672:certificate/53ba8653-7430-4efe-8ab0-d74eba277eb8',
         )
 
+        // Distribuição CloudFront com a API, bucket de estáticos e certificado
         const distribution = new Distribution(this, 'CloudfrontDistribution', {
             defaultBehavior: {
                 origin: new HttpOrigin(
@@ -193,11 +195,12 @@ export class DeploymentService extends Construct {
             },
         })
 
-        // A zona precisa ser criada no Route53 antes do deploy
+        // Zona dns gerada no Route53
         const zone = HostedZone.fromLookup(this, 'HostedZone', {
             domainName: 'smultidownloader.com',
         })
 
+        // Registros do dns apontando para o CloudFront
         new ARecord(this, 'RootAlias', {
             zone,
             recordName: '@',
@@ -222,11 +225,12 @@ export class DeploymentService extends Construct {
             target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         })
 
-        // Fila SQS
+        // Fila SQS para processamento de jobs
         const processQueue = new Queue(this, 'ProcessQueue', {
             queueName: process.env.SQS_PROCESS_QUEUE_NAME,
         })
-        // Lambda com imagem Docker local
+
+        // Deploy da função Lambda de processamento de jobs a partir de uma imagem Docker
         const processFunction = new DockerImageFunction(
             this,
             'ProcessFunction',
@@ -244,11 +248,10 @@ export class DeploymentService extends Construct {
             },
         )
 
-        // Conecta SQS → Lambda
+        // Conecta SQS a Lambda
         processFunction.addEventSource(new SqsEventSource(processQueue))
 
-        /// Deploy buckets s3
-
+        /// Deploy de buckets s3
         new BucketDeployment(this, 'StaticAssetsBucketDeployment', {
             sources: [
                 Source.asset(resolve(__dirname, '../../apps/web/build/client')),
