@@ -5,7 +5,7 @@ export const dictionary = {
             'Download videos and music from YouTube with Smulti Downloader',
     },
     donate: {
-        button: 'Support This Project',
+        button: 'Support this project',
     },
     hero: {
         title: 'Smulti Downloader ♪',

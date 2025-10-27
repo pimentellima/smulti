@@ -2,19 +2,14 @@ import { DonateButton } from '@/components/donate-button'
 import Downloader from '@/components/downloader'
 import { LanguageSelector } from '@/components/language-selector'
 import SubmitLinksForm from '@/components/submit-links-form'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import {
-    dehydrate,
-    HydrationBoundary,
-    QueryClient,
-} from '@tanstack/react-query'
 import {
     Accordion,
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
 } from '@/components/ui/accordion'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import {
     Card,
     CardContent,
@@ -24,12 +19,16 @@ import {
     CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { Locale } from '@/common/locale'
+import { getJobsByRequestId } from '@/core/api'
+import useDictionary from '@/hooks/dictionary'
+import {
+    dehydrate,
+    HydrationBoundary,
+    QueryClient,
+} from '@tanstack/react-query'
 import { Clock, Download, Music, Shield } from 'lucide-react'
 import { Suspense, useState } from 'react'
-import { useLoaderData, useParams, type LoaderFunctionArgs } from 'react-router'
-import { loadDictionary } from '@/lib/dictionaries/load-dictionary'
-import { getJobsByRequestId } from '@/core/api'
+import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
 export function meta({}: any) {
     return [
         { title: 'Smulti' },
@@ -55,49 +54,52 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function HomePage() {
-    const locale = useParams().locale as Locale
     const { dehydratedState } = useLoaderData() as Awaited<
         ReturnType<typeof loader>
     >
-    const dictionary = loadDictionary(locale)
+    const dictionary = useDictionary()
 
     const [pageError, setPageError] = useState<string | undefined>()
 
     return (
         <main className="bg-card">
-            <div className="flex gap-1 absolute right-1/2 translate-x-1/2 top-2 z-10">
-                <DonateButton locale={locale} />
-                <LanguageSelector />
-            </div>
-            <section className="h-[75vh] flex w-full justify-center items-center bg-linear-to-r from-[#2e2727] to-[#af2c39] mx-auto py-24 px-4 scroll-mt-16">
-                <Card className="w-5xl mx-auto bg-background text-foreground">
-                    <CardHeader>
-                        <CardTitle className="text-center text-2xl md:text-3xl font-bold">
-                            {dictionary.hero.title}
-                        </CardTitle>
-                        <CardDescription className="text-center text-sm">
-                            {dictionary.hero.description}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <SubmitLinksForm setPageError={setPageError} />
-                        <Suspense fallback={<LoadingSkeleton />}>
-                            <HydrationBoundary state={dehydratedState}>
-                                <Downloader setPageError={setPageError} />
-                            </HydrationBoundary>
-                        </Suspense>
-                    </CardContent>
-                    <CardFooter className="flex justify-between">
-                        {pageError && (
-                            <Alert variant="destructive" className="mt-4">
-                                <AlertTitle>
-                                    {dictionary.error.default}
-                                </AlertTitle>
-                                <AlertDescription>{pageError}</AlertDescription>
-                            </Alert>
-                        )}
-                    </CardFooter>
-                </Card>
+            <section className="py-4 pb-14 w-full bg-linear-to-r from-[#2e2727] to-[#af2c39]">
+                <div className="mx-auto flex flex-col gap-3 items-center">
+                    <div className="flex items-center gap-1">
+                        <DonateButton />
+                        <LanguageSelector />
+                    </div>
+                    <Card className='text-foreground bg-background my-auto w-5xl'>
+                        <CardHeader>
+                            <CardTitle className="text-center text-2xl md:text-3xl font-bold">
+                                {dictionary.hero.title}
+                            </CardTitle>
+                            <CardDescription className="text-center text-sm">
+                                {dictionary.hero.description}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <SubmitLinksForm setPageError={setPageError} />
+                            <Suspense fallback={<LoadingSkeleton />}>
+                                <HydrationBoundary state={dehydratedState}>
+                                    <Downloader />
+                                </HydrationBoundary>
+                            </Suspense>
+                        </CardContent>
+                        <CardFooter className="flex justify-between">
+                            {pageError && (
+                                <Alert variant="destructive" className="mt-4">
+                                    <AlertTitle>
+                                        {dictionary.error.default}
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                        {pageError}
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+                        </CardFooter>
+                    </Card>
+                </div>
             </section>
 
             <section className="container mx-auto py-8 md:py-14">
