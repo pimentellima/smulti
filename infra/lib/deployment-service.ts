@@ -93,31 +93,12 @@ export class DeploymentService extends Construct {
             originAccessIdentity: oai,
         })
 
-        // Role do lambda para o SSR com acesso aos recursos necessários
-        const ssrRole = new Role(this, 'SsrLambdaRole', {
-            assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
-            description:
-                'Role for SSR Lambda with access to environment resources',
-            managedPolicies: [
-                ManagedPolicy.fromAwsManagedPolicyName(
-                    'service-role/AWSLambdaBasicExecutionRole',
-                ),
-
-                ManagedPolicy.fromAwsManagedPolicyName(
-                    'AmazonS3ReadOnlyAccess',
-                ),
-                ManagedPolicy.fromAwsManagedPolicyName(
-                    'SecretsManagerReadWrite',
-                ),
-            ],
-        })
         // Bundling e deploy da função Lambda do app web SSR
         const ssr = new NodejsFunction(this, 'SsrServerFunction', {
             runtime: Runtime.NODEJS_20_X,
             entry: resolve(__dirname, '../../apps/web/server.js'),
             handler: 'handler',
             timeout: Duration.seconds(29),
-            role: ssrRole,
             environment: {
                 S3_STATIC_BUCKET_NAME: process.env.S3_STATIC_BUCKET_NAME!,
                 S3_UPLOADS_BUCKET_NAME: process.env.S3_UPLOADS_BUCKET_NAME!,
@@ -132,6 +113,8 @@ export class DeploymentService extends Construct {
                 externalModules: ['@aws-sdk/*'],
             },
         })
+        // Concede permissão de leitura e escrita no uploadsBucket para a função SSR
+        uploadsBucket.grantReadWrite(ssr)
 
         // Api gateway integrada com o lambda SSR
         const httpApi = new HttpApi(this, 'SsrHttpApi', {
@@ -229,6 +212,8 @@ export class DeploymentService extends Construct {
         const processQueue = new Queue(this, 'ProcessQueue', {
             queueName: process.env.SQS_PROCESS_QUEUE_NAME,
         })
+        // Concede permissão para a função SSR enviar mensagens para o processQueue
+        processQueue.grantSendMessages(ssr)
 
         // Deploy da função Lambda de processamento de jobs a partir de uma imagem Docker
         const processFunction = new DockerImageFunction(

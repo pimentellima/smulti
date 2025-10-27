@@ -1,12 +1,6 @@
 import { MediaConvert } from '@aws-sdk/client-mediaconvert'
 
-const mediaConvert = new MediaConvert({
-    region: process.env.AWS_REGION,
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    },
-})
+const client = new MediaConvert({})
 
 const mediaConvertRoleArn = process.env.MEDIACONVERT_ROLE_ARN!
 
@@ -20,7 +14,7 @@ export async function addConversionToMediaConvert(
 ) {
     const { audioInput, videoInput, output } = data
 
-    return await mediaConvert.createJob({
+    return await client.createJob({
         UserMetadata: {
             mergedFormatId,
         },
