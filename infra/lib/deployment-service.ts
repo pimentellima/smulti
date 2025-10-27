@@ -1,5 +1,9 @@
-import { Construct } from 'constructs'
 import { CfnOutput, Duration, RemovalPolicy, StackProps } from 'aws-cdk-lib'
+import { HttpApi } from 'aws-cdk-lib/aws-apigatewayv2'
+import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations'
+import {
+    Certificate
+} from 'aws-cdk-lib/aws-certificatemanager'
 import {
     AllowedMethods,
     CacheCookieBehavior,
@@ -13,53 +17,33 @@ import {
 } from 'aws-cdk-lib/aws-cloudfront'
 import {
     HttpOrigin,
-    S3Origin,
-    S3StaticWebsiteOrigin,
+    S3Origin
 } from 'aws-cdk-lib/aws-cloudfront-origins'
-import { BlockPublicAccess, Bucket, BucketPolicy } from 'aws-cdk-lib/aws-s3'
-import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment'
 import {
-    Code,
     DockerImageCode,
     DockerImageFunction,
-    Function,
-    Runtime,
+    Runtime
 } from 'aws-cdk-lib/aws-lambda'
-import { resolve } from 'path'
-import {
-    CanonicalUserPrincipal,
-    ManagedPolicy,
-    PolicyDocument,
-    PolicyStatement,
-    Role,
-    ServicePrincipal,
-} from 'aws-cdk-lib/aws-iam'
-import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations'
-import { HttpApi } from 'aws-cdk-lib/aws-apigatewayv2'
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
+import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs'
 import {
     AaaaRecord,
     ARecord,
     HostedZone,
     RecordTarget,
 } from 'aws-cdk-lib/aws-route53'
-import {
-    Certificate,
-    ValidationMethod,
-} from 'aws-cdk-lib/aws-certificatemanager'
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets'
-import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs'
-import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
+import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3'
+import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
+import { Construct } from 'constructs'
 import { config } from 'dotenv'
+import { resolve } from 'path'
 
 config({ path: resolve(__dirname, '../../.env') })
 
-interface MyStackProps extends StackProps {
-    apiName: string
-}
-
 export class DeploymentService extends Construct {
-    constructor(scope: Construct, id: string, props: MyStackProps) {
+    constructor(scope: Construct, id: string) {
         super(scope, id)
 
         // Bucket de estáticos do front end com acesso público desabilitado
@@ -118,7 +102,6 @@ export class DeploymentService extends Construct {
 
         // Api gateway integrada com o lambda SSR
         const httpApi = new HttpApi(this, 'SsrHttpApi', {
-            apiName: props.apiName,
             defaultIntegration: new HttpLambdaIntegration(
                 'SsrHttpIntegration',
                 ssr,
