@@ -186,13 +186,11 @@ export class DeploymentService extends Construct {
         // Registros do dns apontando para o CloudFront
         new ARecord(this, 'RootAlias', {
             zone,
-            recordName: '@',
             target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         })
 
         new AaaaRecord(this, 'RootAliasIPv6', {
             zone,
-            recordName: '@',
             target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         })
 
