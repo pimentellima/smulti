@@ -59,8 +59,6 @@ export default function HomePage() {
     >
     const dictionary = useDictionary()
 
-    const [pageError, setPageError] = useState<string | undefined>()
-
     return (
         <main className="bg-card">
             <section className="py-4 pb-14 px-4 w-full bg-linear-to-r from-[#2e2727] to-[#af2c39]">
@@ -79,22 +77,11 @@ export default function HomePage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
+                            <SubmitLinksForm  />
                             <HydrationBoundary state={dehydratedState}>
                                 <Downloader />
                             </HydrationBoundary>
                         </CardContent>
-                        <CardFooter className="flex justify-between">
-                            {pageError && (
-                                <Alert variant="destructive" className="mt-4">
-                                    <AlertTitle>
-                                        {dictionary.error.default}
-                                    </AlertTitle>
-                                    <AlertDescription>
-                                        {pageError}
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-                        </CardFooter>
                     </Card>
                 </div>
             </section>

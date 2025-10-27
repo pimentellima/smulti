@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useLocale } from '../hooks/locale'
 import { ApiError } from '@/common/errors'
+import { toast } from 'sonner'
 
 const formDictionary = {
     'en-US': {
@@ -27,12 +28,8 @@ const formDictionary = {
         },
     },
 }
-interface SubmitLinksFormProps {
-    setPageError: (error: string | undefined) => void
-}
-export default function SubmitLinksForm({
-    setPageError,
-}: SubmitLinksFormProps) {
+
+export default function SubmitLinksForm() {
     const locale = useLocale()
     const [inputValue, setInputValue] = useState('')
     const links = useMemo(
@@ -51,20 +48,13 @@ export default function SubmitLinksForm({
         e.preventDefault()
 
         if (links.length === 0) {
-            setPageError?.(formDictionary[locale].errors.emptyLinks)
+            toast.error(formDictionary[locale].errors.emptyLinks)
             return
         }
-        const result = await createJobs.mutateAsync(
-            {
-                urls: links,
-                requestId,
-            },
-            {
-                onError: (err: any) => {
-                    setPageError(err.message || 'An unexpected error occurred')
-                },
-            },
-        )
+        const result = await createJobs.mutateAsync({
+            urls: links,
+            requestId,
+        })
         if (result.requestId !== requestId) {
             setRequestId(result.requestId)
         }
