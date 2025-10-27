@@ -1,5 +1,6 @@
 import { ApiError } from '@/common/errors'
 import {
+    GetQueueUrlCommand,
     SQSClient,
     SendMessageBatchCommand,
     SendMessageCommand,
@@ -8,14 +9,18 @@ import {
 const client = new SQSClient({})
 
 export async function addJobsToProcessQueue(jobIds: string[]) {
-    const ProcessQueueUrl = ''
+    const { QueueUrl } = await client.send(
+        new GetQueueUrlCommand({
+            QueueName: process.env.SQS_PROCESS_QUEUE_NAME!,
+        }),
+    )
     return await Promise.allSettled(
         jobIds.map(async (id) => {
             return new Promise<{ id: string }>(async (resolve, reject) => {
                 try {
                     await client.send(
                         new SendMessageBatchCommand({
-                            QueueUrl: ProcessQueueUrl,
+                            QueueUrl,
                             Entries: jobIds.map((id) => ({
                                 MessageBody: id,
                                 Id: id,
@@ -32,11 +37,14 @@ export async function addJobsToProcessQueue(jobIds: string[]) {
 }
 
 export async function addMergedFormatToConvertQueue(mergedFormatId: string) {
-    const PrepareQueueUrl = ''
-
+    const { QueueUrl } = await client.send(
+        new GetQueueUrlCommand({
+            QueueName: process.env.SQS_CONVERT_QUEUE_NAME!,
+        }),
+    )
     try {
         const command = new SendMessageCommand({
-            QueueUrl: PrepareQueueUrl,
+            QueueUrl,
             MessageBody: mergedFormatId,
         })
         return await client.send(command)

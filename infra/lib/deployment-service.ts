@@ -18,7 +18,13 @@ import {
 } from 'aws-cdk-lib/aws-cloudfront-origins'
 import { BlockPublicAccess, Bucket, BucketPolicy } from 'aws-cdk-lib/aws-s3'
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment'
-import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda'
+import {
+    Code,
+    DockerImageCode,
+    DockerImageFunction,
+    Function,
+    Runtime,
+} from 'aws-cdk-lib/aws-lambda'
 import { resolve } from 'path'
 import {
     CanonicalUserPrincipal,
@@ -34,10 +40,13 @@ import {
 } from 'aws-cdk-lib/aws-certificatemanager'
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets'
 import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs'
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
+import { Queue } from 'aws-cdk-lib/aws-sqs'
+import { config } from 'dotenv'
+
+config({ path: resolve(__dirname, '../../.env') })
 
 interface MyStackProps extends StackProps {
-    s3StaticBucketName: string
-    s3FilesBucketName: string
     region: string
     apiName: string
 }
@@ -49,7 +58,7 @@ export class DeploymentService extends Construct {
         // Definição de Buckets S3
 
         const staticAssetsBucket = new Bucket(this, 'StaticAssetsBucket', {
-            bucketName: props.s3StaticBucketName,
+            bucketName: process.env.S3_STATIC_BUCKET_NAME!,
             removalPolicy: RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
             publicReadAccess: false,
@@ -57,7 +66,7 @@ export class DeploymentService extends Construct {
         })
 
         const uploadsBucket = new Bucket(this, 'UploadsBucket', {
-            bucketName: props.s3FilesBucketName,
+            bucketName: process.env.S3_UPLOADS_BUCKET_NAME!,
             removalPolicy: RemovalPolicy.RETAIN,
             autoDeleteObjects: false,
             publicReadAccess: true,
@@ -68,7 +77,7 @@ export class DeploymentService extends Construct {
             this,
             'StaticAssetsAccessIdentity',
             {
-                comment: `Origin Access Identity to access website bucket ${props.s3StaticBucketName}`,
+                comment: `Origin Access Identity to access website bucket ${process.env.S3_STATIC_BUCKET_NAME!}`,
             },
         )
         staticAssetsBucket.grantRead(oai)
@@ -83,6 +92,13 @@ export class DeploymentService extends Construct {
             entry: resolve(__dirname, '../../apps/web/server.js'),
             handler: 'handler',
             timeout: Duration.seconds(29),
+            environment: {
+                S3_STATIC_BUCKET_NAME: process.env.S3_STATIC_BUCKET_NAME!,
+                S3_UPLOADS_BUCKET_NAME: process.env.S3_UPLOADS_BUCKET_NAME!,
+                DATABASE_URL: process.env.DATABASE_URL!,
+                SQS_PROCESS_QUEUE_NAME: process.env.SQS_PROCESS_QUEUE_NAME!,
+                SQS_CONVERT_QUEUE_NAME: process.env.SQS_CONVERT_QUEUE_NAME!,
+            },
             bundling: {
                 format: OutputFormat.CJS,
                 platform: 'node',
@@ -113,26 +129,20 @@ export class DeploymentService extends Construct {
 
         // Distribuição CloudFront
 
-        /*         const zone = HostedZone.fromLookup(this, 'Zone', {
-            domainName: 'smultidownloader.com',
-        })
-
-        const certificate = new Certificate(this, 'Cert', {
-            domainName: 'smultidownloader.com',
-            validation: {
-                method: ValidationMethod.DNS,
-                props: { hostedZone: zone },
-            },
-        }) */
-
+        const certificate = Certificate.fromCertificateArn(
+            this,
+            'Cert',
+            'arn:aws:acm:us-east-1:412381757672:certificate/53ba8653-7430-4efe-8ab0-d74eba277eb8',
+        )
         const distribution = new Distribution(this, 'CloudfrontDistribution', {
             defaultBehavior: {
                 origin: new HttpOrigin(
                     `${httpApi.apiId}.execute-api.${props.region}.amazonaws.com`,
                 ),
+                allowedMethods: AllowedMethods.ALLOW_ALL,
                 viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             },
-            // certificate,
+            certificate,
             additionalBehaviors: {
                 'assets/*': {
                     origin: staticAssetsOrigin,
@@ -155,12 +165,31 @@ export class DeploymentService extends Construct {
             },
         })
 
-        /*      const record = new ARecord(this, 'AliasRecord', {
-            zone,
-            recordName: 'smultidownloader.com',
-            target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
+        // Fila SQS
+        const processQueue = new Queue(this, 'ProcessQueue', {
+            queueName: process.env.SQS_PROCESS_QUEUE_NAME,
         })
- */
+        // Lambda com imagem Docker local
+        const processFunction = new DockerImageFunction(
+            this,
+            'ProcessFunction',
+            {
+                functionName: 'smulti-process-worker',
+                code: DockerImageCode.fromImageAsset(
+                    resolve(__dirname, '../../functions/process-worker'),
+                    {
+                        file: 'Dockerfile', // caminho relativo ao diretório atual
+                    },
+                ),
+                environment: {
+                    DATABASE_URL: process.env.DATABASE_URL!,
+                },
+            },
+        )
+
+        // Conecta SQS → Lambda
+        processFunction.addEventSource(new SqsEventSource(processQueue))
+
         /// Deploy buckets s3
 
         new BucketDeployment(this, 'StaticAssetsBucketDeployment', {
