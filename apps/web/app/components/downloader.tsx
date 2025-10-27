@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import type { ColumnDef } from '@tanstack/table-core'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { LinksTable } from '../components/links-table'
+import { JobsTable } from './jobs-table'
 import { useCancelJob, useJobs, useRetryJob } from '../hooks/jobs'
 import { useLocale } from '../hooks/locale'
 import CancelJobButton from './cancel-job-button'
@@ -204,7 +204,7 @@ export default function Downloader() {
                     </Button>
                 </div>
             </div>
-            <LinksTable
+            <JobsTable
                 data={jobs || []}
                 isLoading={isLoadingJobs}
                 columns={columns}

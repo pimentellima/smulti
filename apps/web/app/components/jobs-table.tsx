@@ -50,7 +50,7 @@ const tableDictionary = {
     },
 }
 
-export function LinksTable({
+export function JobsTable({
     data,
     columns,
     isLoading,
