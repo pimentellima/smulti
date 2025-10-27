@@ -209,6 +209,7 @@ export class DeploymentService extends Construct {
         // Fila SQS para processamento de jobs
         const processQueue = new Queue(this, 'ProcessQueue', {
             queueName: process.env.SQS_PROCESS_QUEUE_NAME,
+            visibilityTimeout: Duration.minutes(1),
         })
         // Concede permissão para a função SSR enviar mensagens para o processQueue
         processQueue.grantSendMessages(ssr)
