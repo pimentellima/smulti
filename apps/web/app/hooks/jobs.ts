@@ -1,34 +1,25 @@
-import {
-    useQuery,
-    useMutation,
-    useQueryClient,
-} from '@tanstack/react-query'
-import type { CreateJobsSchema, RetryJobsSchema } from '@/common/zod/job'
 import type { JobWithFormats } from '@/common/types'
+import type { CreateJobsSchema } from '@/common/zod/job'
+import { handleApiResponse } from '@/lib/utils/handle-api-response'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { useLocale } from './locale'
 import { loadDictionary } from '@/lib/dictionaries/load-dictionary'
-import { handleApiResponse } from '@/lib/utils/handle-api-response'
+import useDictionary from './dictionary'
 
 export function useJobs(requestId: string | null) {
     return useQuery<JobWithFormats[]>({
-        queryKey: ['jobs', requestId],
-        queryFn: async () => {
-            const response = await fetch(`/requests/${requestId}`)
-            if (!response.ok) {
-                throw new Error('Failed to fetch jobs')
-            }
-            return await response.json()
-        },
+        queryKey: ['jobs', { requestId }],
+        queryFn: async () =>
+            handleApiResponse(await fetch(`/requests/${requestId}`)),
         enabled: !!requestId,
-        refetchInterval: 2000,
+        refetchOnWindowFocus: false,
     })
 }
 
 export function useCreateJobs() {
     const queryClient = useQueryClient()
-    const locale = useLocale()
-    const dict = loadDictionary(locale)
-
+    const dictionary = useDictionary()
     return useMutation<{ requestId: string }, unknown, CreateJobsSchema>({
         mutationFn: async (jobs: CreateJobsSchema) =>
             handleApiResponse(
@@ -40,37 +31,35 @@ export function useCreateJobs() {
                     body: JSON.stringify(jobs),
                 }),
             ),
+        onError: () => toast.error(dictionary.error.create_job),
         onSuccess: async (data) => {
             await queryClient.invalidateQueries({
-                queryKey: ['jobs', data.requestId],
+                queryKey: ['jobs', { requestId: data.requestId }],
             })
         },
     })
 }
 
-export function useRetryJobs() {
+export function useRetryJob() {
     const queryClient = useQueryClient()
+    const dictionary = useDictionary()
 
     return useMutation({
-        mutationFn: async (data: RetryJobsSchema) => {
-            const response = await fetch(`/retry`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
-
-            if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.error || 'Failed to retry jobs')
-            }
-
-            return await response.json()
+        mutationFn: async (jobId: string) => {
+            await handleApiResponse(
+                await fetch(`/jobs/retry/${jobId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }),
+            )
+            return jobId
         },
-        onSuccess: async () => {
+        onError: () => toast.error(dictionary.error.retry_job),
+        onSuccess: async (jobId) => {
             await queryClient.invalidateQueries({
-                queryKey: ['jobs'],
+                queryKey: ['jobs', { jobId }],
             })
         },
     })
@@ -78,45 +67,18 @@ export function useRetryJobs() {
 
 export function useCancelJob() {
     const queryClient = useQueryClient()
-
+    const dictionary = useDictionary()
     return useMutation({
-        mutationFn: async (jobId: string) => {
-            const response = await fetch(`/jobs/${jobId}`, {
-                method: 'PUT',
-            })
-            if (!response.ok) {
-                throw new Error('Failed to cancel job')
-            }
-        },
+        mutationFn: async (jobId: string) =>
+            handleApiResponse(
+                await fetch(`/jobs/${jobId}`, {
+                    method: 'PUT',
+                }),
+            ),
+        onError: () => toast.error(dictionary.error.cancel_job),
         onSuccess: async () => {
             await queryClient.refetchQueries({
                 queryKey: ['jobs'],
-            })
-        },
-    })
-}
-
-export function useStartConversion() {
-    const queryClient = useQueryClient()
-
-    return useMutation({
-        mutationFn: async ({
-            formatId,
-            jobId,
-        }: {
-            jobId: string
-            formatId: string
-        }) => {
-            const response = await fetch(`/jobs/${jobId}/${formatId}`, {
-                method: 'POST',
-            })
-            if (!response.ok) {
-                throw new Error('Failed to start conversion')
-            }
-        },
-        onSuccess: async () => {
-            await queryClient.refetchQueries({
-                queryKey: ['job-poll'],
             })
         },
     })

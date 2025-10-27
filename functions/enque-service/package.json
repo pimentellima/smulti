@@ -1,0 +1,16 @@
+{
+    "name": "@smulti/enque-service",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "check-types": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@smulti/core": "1.0.0",
+        "@smulti/common": "1.0.0",
+        "aws-lambda": "^1.0.7"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.114"
+    }
+}

@@ -44,7 +44,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     const queryClient = new QueryClient()
     if (requestId) {
         await queryClient.prefetchQuery({
-            queryKey: ['jobs', requestId],
+            queryKey: ['jobs', { requestId }],
             queryFn: () => getJobsByRequestId(requestId),
         })
     }

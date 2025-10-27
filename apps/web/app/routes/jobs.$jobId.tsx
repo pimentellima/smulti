@@ -1,7 +1,6 @@
 import { ApiError, handleApiError } from '@/common/errors'
-import {
-    updateJobStatus
-} from '@/core/api'
+import { getJobOrThrow, updateJobStatus } from '@/core/api'
+import { z } from 'zod'
 import { Route } from './+types/jobs.$jobId'
 
 export async function action({ params, request }: Route.ActionArgs) {
@@ -14,6 +13,14 @@ export async function action({ params, request }: Route.ActionArgs) {
             code: 'bad_request',
             message: `Method ${request.method} not allowed`,
         })
+    } catch (e) {
+        return handleApiError(e)
+    }
+}
+
+export async function loader({ params, request }: Route.LoaderArgs) {
+    try {
+        return await getJobOrThrow(z.string().uuid().parse(params.jobId))
     } catch (e) {
         return handleApiError(e)
     }

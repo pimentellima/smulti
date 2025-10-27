@@ -1,18 +1,13 @@
 import { z } from 'zod'
-import { jobStatusEnum, mergedFormatsStatusEnum } from '@/db/schema'
+import { jobStatusEnum } from '@/db/schema'
 
 export const createJobsSchema = z.object({
     requestId: z.string().uuid().nullish(),
     urls: z.array(z.string().url()),
 })
 
-export const statusSchema = z.enum(jobStatusEnum.enumValues)
-export type JobStatusSchema = z.infer<typeof statusSchema>
-
-export const mergedFormatStatusSchema = z.enum(
-    mergedFormatsStatusEnum.enumValues,
-)
-export type ConvertFormatStatus = z.infer<typeof mergedFormatStatusSchema>
+export const statusEnum = z.enum(jobStatusEnum.enumValues)
+export type JobStatusSchema = z.infer<typeof statusEnum>
 
 export const downloadJobByRequestSchema = z.object({
     requestId: z.string().uuid(),
@@ -29,17 +24,4 @@ export const convertSchema = z.object({
     audioFormatId: z.string().uuid(),
 })
 
-export const retryJobsSchema = z
-    .object({
-        ids: z.string().uuid().array().optional(),
-        requestId: z.string().uuid().nullish(),
-    })
-    .refine(
-        (val) => (val.ids && !val.requestId) || (!val.ids && val.requestId),
-        {
-            message: 'Either ids or requestId is required, but not both',
-        },
-    )
-
-export type RetryJobsSchema = z.infer<typeof retryJobsSchema>
 export type CreateJobsSchema = z.infer<typeof createJobsSchema>

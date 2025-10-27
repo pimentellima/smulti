@@ -8,5 +8,4 @@ export type Request = InferSelectModel<typeof requests>
 export type User = InferSelectModel<typeof users>
 export type JobWithFormats = Job & {
     formats: Format[]
-    mergedFormats: MergedFormat[]
 }

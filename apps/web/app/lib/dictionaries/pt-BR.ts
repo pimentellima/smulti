@@ -85,7 +85,17 @@ export const dictionary = {
         disclaimer:
             'Use com responsabilidade e baixe apenas conteúdos que você tenha permissão para acessar.',
     },
+    actions: {
+        download: 'Baixar',
+        retry: 'Tentar Novamente',
+        cancel: 'Cancelar',
+        delete: 'Excluir',
+    },
     error: {
+        login: 'Falha ao fazer login. Verifique suas credenciais e tente novamente.',
+        cancel_job: 'Falha ao cancelar. Tente novamente.',
+        retry_job: 'Falha ao tentar novamente. Tente novamente.',
+        create_job: 'Falha ao criar. Tente novamente.',
         default: 'An unexpected error occurred. Please try again later.',
         unprocessable_entity:
             'The provided links are invalid. Please check and try again.',

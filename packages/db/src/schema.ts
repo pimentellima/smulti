@@ -18,14 +18,6 @@ export const jobStatusEnum = pgEnum('job_status', [
     'finished-processing',
 ])
 
-export const mergedFormatsStatusEnum = pgEnum('merged_formats_status', [
-    'waiting-to-convert',
-    'error-converting',
-    'queued-converting',
-    'converting',
-    'converted',
-])
-
 export const jobs = pgTable('jobs', {
     id: uuid('id').primaryKey().defaultRandom(),
     requestId: uuid('request_id')
@@ -35,34 +27,6 @@ export const jobs = pgTable('jobs', {
     status: jobStatusEnum('status').notNull(),
     title: text('title'),
 })
-
-
-export const mergedFormats = pgTable(
-    'merged_formats',
-    {
-        id: uuid('id').primaryKey().defaultRandom(),
-        status: mergedFormatsStatusEnum('status').notNull(),
-        videoFormatId: uuid('video_format_id')
-            .references(() => formats.id, {
-                onDelete: 'cascade',
-            })
-            .notNull(),
-        audioFormatId: uuid('audio_format_id')
-            .references(() => formats.id, {
-                onDelete: 'cascade',
-            })
-            .notNull(),
-        jobId: uuid('job_id')
-            .references(() => jobs.id, {
-                onDelete: 'cascade',
-            })
-            .notNull(),
-        downloadUrl: text('download_url'),
-    },
-    (table) => ({
-        videoAudioUnique: unique().on(table.videoFormatId, table.audioFormatId),
-    }),
-)
 
 export const formats = pgTable('formats', {
     id: uuid('id').primaryKey().defaultRandom(),
@@ -103,7 +67,6 @@ export const users = pgTable('users', {
 
 export const jobRelations = relations(jobs, ({ many, one }) => ({
     formats: many(formats),
-    mergedFormats: many(mergedFormats),
     request: one(requests, {
         fields: [jobs.requestId],
         references: [requests.id],
@@ -123,19 +86,4 @@ export const requestRelations = relations(requests, ({ many, one }) => ({
         references: [users.id],
     }),
     jobs: many(jobs),
-}))
-
-export const mergedVideoRelations = relations(mergedFormats, ({ one }) => ({
-    videoFormat: one(formats, {
-        fields: [mergedFormats.videoFormatId],
-        references: [formats.id],
-    }),
-    audioFormat: one(formats, {
-        fields: [mergedFormats.audioFormatId],
-        references: [formats.id],
-    }),
-    job: one(jobs, {
-        fields: [mergedFormats.jobId],
-        references: [jobs.id],
-    }),
 }))

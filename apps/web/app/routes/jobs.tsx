@@ -1,4 +1,4 @@
-import { MAX_CONCURRENT_JOBS } from '@/common/constants'
+import { CONCURRENT_JOB_LIMIT } from '@/common/constants'
 import { ApiError, handleApiError } from '@/common/errors'
 import { createJobsSchema } from '@/common/zod/job'
 import {
@@ -26,21 +26,13 @@ export async function action({ request }: Route.ActionArgs) {
                     requestId,
                 })),
             )
-
-            // todo: checa runningJobs por usuário
-            const runningJobs = await getItemsInQueueCount()
-
+            const itemsInQueue = await getItemsInQueueCount()
             const jobsToProcess = jobs
-                .slice(0, MAX_CONCURRENT_JOBS - runningJobs)
+                .slice(0, CONCURRENT_JOB_LIMIT - itemsInQueue)
                 .map((job) => job.id)
 
+            await addJobsToProcessQueue(jobsToProcess)
             await batchUpdateJobStatus(jobsToProcess, 'queued-processing')
-
-            const result = await addJobsToProcessQueue(jobsToProcess)
-            const erroredJobs = result
-                .filter((r) => r.status === 'rejected')
-                .map((r) => r.reason.id)
-            await batchUpdateJobStatus(erroredJobs, 'error-processing')
 
             return { requestId }
         }

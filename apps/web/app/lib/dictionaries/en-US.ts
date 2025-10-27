@@ -81,7 +81,17 @@ export const dictionary = {
             },
         ],
     },
+    actions: {
+        download: 'Download',
+        delete: 'Delete',
+        retry: 'Try Again',
+        cancel: 'Cancel',
+    },
     error: {
+        login: 'Login failed. Please check your credentials and try again.',
+        cancel_job: 'Job cancellation failed. Please try again.',
+        retry_job: 'Job retry failed. Please try again.',
+        create_job: 'Job creation failed. Please try again.',
         default: 'An unexpected error occurred. Please try again later.',
         unprocessable_entity:
             'The provided links are invalid. Please check and try again.',

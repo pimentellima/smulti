@@ -1,9 +1,7 @@
-import { CfnOutput, Duration, RemovalPolicy, StackProps } from 'aws-cdk-lib'
+import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib'
 import { HttpApi } from 'aws-cdk-lib/aws-apigatewayv2'
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations'
-import {
-    Certificate
-} from 'aws-cdk-lib/aws-certificatemanager'
+import { Certificate } from 'aws-cdk-lib/aws-certificatemanager'
 import {
     AllowedMethods,
     CacheCookieBehavior,
@@ -15,10 +13,9 @@ import {
     OriginAccessIdentity,
     ViewerProtocolPolicy,
 } from 'aws-cdk-lib/aws-cloudfront'
-import {
-    HttpOrigin,
-    S3Origin
-} from 'aws-cdk-lib/aws-cloudfront-origins'
+import { HttpOrigin, S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins'
+import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
+import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets'
 import {
     DockerImageCode,
     DockerImageFunction,
@@ -88,7 +85,6 @@ export class DeploymentService extends Construct {
                 S3_UPLOADS_BUCKET_NAME: process.env.S3_UPLOADS_BUCKET_NAME!,
                 DATABASE_URL: process.env.DATABASE_URL!,
                 SQS_PROCESS_QUEUE_NAME: process.env.SQS_PROCESS_QUEUE_NAME!,
-                SQS_CONVERT_QUEUE_NAME: process.env.SQS_CONVERT_QUEUE_NAME!,
             },
             bundling: {
                 format: OutputFormat.CJS,
@@ -166,16 +162,7 @@ export class DeploymentService extends Construct {
             domainName: 'smultidownloader.com',
         })
 
-        // Registros do dns apontando para o CloudFront
-        new ARecord(this, 'RootAlias', {
-            zone,
-            target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
-        })
-
-        new AaaaRecord(this, 'RootAliasIPv6', {
-            zone,
-            target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
-        })
+        // Registros www do dns apontando para o CloudFront
 
         new ARecord(this, 'WwwAlias', {
             zone,
@@ -218,6 +205,33 @@ export class DeploymentService extends Construct {
         // Conecta SQS a Lambda
         processFunction.addEventSource(new SqsEventSource(processQueue))
 
+        // Função Lambda para enfileirar jobs periodicamente
+        const cronLambda = new NodejsFunction(this, 'EnqueLambda', {
+            runtime: Runtime.NODEJS_20_X,
+            handler: 'handler',
+            entry: resolve(__dirname, '../../functions/enque-service/src/enque-jobs.ts'),
+            bundling: {
+                format: OutputFormat.CJS,
+                platform: 'node',
+                target: 'node20',
+                externalModules: ['@aws-sdk/*'],
+            },
+            environment: {
+                DATABASE_URL: process.env.DATABASE_URL!,
+                SQS_PROCESS_QUEUE_NAME: process.env.SQS_PROCESS_QUEUE_NAME!,
+            },
+            timeout: Duration.seconds(30),
+        })
+
+        // Regra do EventBridge para rodar a cada X segundos
+        const rule = new Rule(this, 'CronRule', {
+            schedule: Schedule.rate(Duration.minutes(1)),
+        })
+
+        // Adiciona a Lambda como alvo da regra
+        rule.addTarget(new LambdaFunctionTarget(cronLambda))
+
+     
         /// Deploy de buckets s3
         new BucketDeployment(this, 'StaticAssetsBucketDeployment', {
             sources: [
@@ -241,5 +255,6 @@ export class DeploymentService extends Construct {
         new CfnOutput(this, 'CloudFrontUrl', {
             value: distribution.distributionDomainName,
         })
+
     }
 }

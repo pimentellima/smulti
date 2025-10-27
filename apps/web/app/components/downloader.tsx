@@ -1,15 +1,19 @@
 import type { JobWithFormats } from '@/common/types'
-import { isJobConverting, isJobProcessing } from '@/common/utils'
-import type { ColumnDef } from '@tanstack/table-core'
+import {
+    getJobDownloadUrl,
+    isJobProcessing,
+    isJobProcessingError,
+} from '@/common/utils'
 import { Button } from '@/components/ui/button'
-import { DownloadIcon, XIcon } from 'lucide-react'
+import type { ColumnDef } from '@tanstack/table-core'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { LinksTable } from '../components/links-table'
-import { useCancelJob, useJobs } from '../hooks/jobs'
+import { useCancelJob, useJobs, useRetryJob } from '../hooks/jobs'
 import { useLocale } from '../hooks/locale'
+import CancelJobButton from './cancel-job-button'
+import DownloadJobButton from './download-job-button'
 import FormatSelector, { type FormatOption } from './format-selector'
-import JobDownloadButton from './job-download-button'
 
 const downloadDictionary = {
     'en-US': {
@@ -30,14 +34,10 @@ const downloadDictionary = {
     },
 }
 
-interface DownloaderProps {
-    setPageError: (error: string | undefined) => void
-}
-
-export default function Downloader({ setPageError }: DownloaderProps) {
+export default function Downloader() {
     const locale = useLocale()
     const dictionary = downloadDictionary[locale] || downloadDictionary['en-US']
-    const [searchParams, setSearchParams] = useSearchParams()
+    const [searchParams] = useSearchParams()
     const [selectedFormats, setSelectedFormats] = useState<
         { jobId: string; formatId: string }[]
     >([])
@@ -45,62 +45,14 @@ export default function Downloader({ setPageError }: DownloaderProps) {
         string | null
     >(null)
     const requestId = searchParams.get('requestId')
-    const [pollingIds, setPollingIds] = useState<Set<string>>(new Set())
 
-    const startPolling = (id: string) => {
-        setPollingIds((prev) => new Set(prev).add(id))
-    }
-
-    const startPollingAll = () => {
-        const allPending =
-            jobs?.filter((j) => j.status !== 'finished-processing') ?? []
-        setPollingIds(new Set(allPending.map((j) => j.id)))
-    }
-
-    const cancelJob = useCancelJob()
-    /*     const retryJobs = useRetryJobs()
-    const [retryingJobs, setRetryingJobs] = useState<Record<string, boolean>>(
-        {},
-    ) */
-
-    const handleRemoveJob = async (jobId: string) => {
-        try {
-            await cancelJob.mutateAsync(jobId)
-        } catch (err) {
-            setPageError('Failed to remove job')
-        }
-    }
-
-    /*     const handleRetry = async (jobId: string) => {
-        try {
-            setRetryingJobs((prev) => ({ ...prev, [jobId]: true }))
-            await retryJobs.mutateAsync({ ids: [jobId] })
-        } catch (err) {
-            setPageError('Failed to retry job')
-        } finally {
-            setRetryingJobs((prev) => ({ ...prev, [jobId]: false }))
-        }
-    }
-    const handleRetryAll = async () => {
-        if (!requestId) return
-
-        try {
-            await retryJobs.mutateAsync({ requestId })
-        } catch (err) {
-            setPageError(
-                err instanceof Error ? err.message : 'Failed to retry jobs',
-            )
-        }
-    } */
     const { data: jobs, isLoading: isLoadingJobs } = useJobs(requestId)
+    const { mutate: retryProcessing } = useRetryJob()
+    const { mutate: cancelJob } = useCancelJob()
 
     const canDownloadCount = (jobs || []).filter(
         (job) => job.status === 'finished-processing',
     ).length
-
-    /*     const failedJobsCount = (jobs || []).filter(
-        (job) => job.status === 'error',
-    ).length */
 
     const getCommonFormats = () => {
         const formats = jobs?.map((job) => job.formats || [])
@@ -136,6 +88,9 @@ export default function Downloader({ setPageError }: DownloaderProps) {
                     )?.formatId
 
                     const isProcessing = isJobProcessing(job)
+                    const downloadUrl = getJobDownloadUrl(job, formatId)
+                    const isError = isJobProcessingError(job)
+
                     return (
                         <div className="flex gap-1 w-min">
                             {isProcessing ? (
@@ -181,30 +136,14 @@ export default function Downloader({ setPageError }: DownloaderProps) {
                                     }
                                 />
                             )}
-                            {formatId ? (
-                                <JobDownloadButton
-                                    jobId={job.id}
-                                    formatId={formatId}
-                                    enablePolling={pollingIds.has(job.id)}
-                                    onStartPolling={() => startPolling(job.id)}
-                                />
-                            ) : (
-                                <Button
-                                    size={'icon'}
-                                    variant={'outline'}
-                                    disabled
-                                >
-                                    <DownloadIcon className="h-4 w-4" />
-                                </Button>
-                            )}
-                            <Button
-                                size="icon"
-                                title={dictionary.delete}
-                                onClick={() => handleRemoveJob(job.id)}
-                                variant={'outline'}
-                            >
-                                <XIcon />
-                            </Button>
+                            <DownloadJobButton
+                                isFormatSelected={!!formatId}
+                                onClickRetry={() => retryProcessing(job.id)}
+                                isProcessing={isProcessing ?? false}
+                                isError={isError ?? false}
+                                downloadUrl={downloadUrl}
+                            />
+                            <CancelJobButton jobId={job.id} />
                         </div>
                     )
                 },
@@ -231,7 +170,7 @@ export default function Downloader({ setPageError }: DownloaderProps) {
                 size: 200,
             },
         ],
-        [jobs, selectedFormats, pollingIds],
+        [jobs, selectedFormats],
     )
 
     if (!jobs) return null
@@ -259,31 +198,10 @@ export default function Downloader({ setPageError }: DownloaderProps) {
                             canDownloadCount === 0 ||
                             !selectedDownloadAllFormat
                         }
-                        onClick={startPollingAll}
+                        onClick={() => {}}
                     >
                         {dictionary.downloadAll}
                     </Button>
-
-                    {/*     {failedJobsCount > 0 && (
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            onClick={handleRetryAll}
-                            disabled={retryJobs.isPending}
-                        >
-                            {retryJobs.isPending ? (
-                                <>
-                                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                                    {downloaderDictionary[locale].retrying}
-                                </>
-                            ) : (
-                                <>
-                                    <RefreshCw className="mr-2 h-3 w-3" />
-                                    {`${downloaderDictionary[locale].retry} (${failedJobsCount})`}
-                                </>
-                            )}
-                        </Button>
-                    )} */}
                 </div>
             </div>
             <LinksTable
