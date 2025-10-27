@@ -84,7 +84,7 @@ export class DeploymentService extends Construct {
             handler: 'handler',
             timeout: Duration.seconds(29),
             bundling: {
-                format: OutputFormat.CJS, 
+                format: OutputFormat.CJS,
                 platform: 'node',
                 target: 'node20',
                 externalModules: ['@aws-sdk/*'],
@@ -129,7 +129,6 @@ export class DeploymentService extends Construct {
             defaultBehavior: {
                 origin: new HttpOrigin(
                     `${httpApi.apiId}.execute-api.${props.region}.amazonaws.com`,
-                    { originPath: '/$default' },
                 ),
                 viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             },
