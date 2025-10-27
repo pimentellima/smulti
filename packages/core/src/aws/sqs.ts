@@ -9,18 +9,16 @@ import {
 const client = new SQSClient({})
 
 export async function addJobsToProcessQueue(jobIds: string[]) {
-    console.log({ queue: process.env.SQS_PROCESS_QUEUE_NAME })
     const { QueueUrl } = await client.send(
         new GetQueueUrlCommand({
             QueueName: process.env.SQS_PROCESS_QUEUE_NAME!,
         }),
     )
-    console.log({ QueueUrl })
     return await Promise.allSettled(
         jobIds.map(async (id) => {
             return new Promise<{ id: string }>(async (resolve, reject) => {
                 try {
-                    await client.send(
+                    const result = await client.send(
                         new SendMessageBatchCommand({
                             QueueUrl,
                             Entries: jobIds.map((id) => ({
@@ -29,7 +27,10 @@ export async function addJobsToProcessQueue(jobIds: string[]) {
                             })),
                         }),
                     )
-                    return resolve({ id })
+                    if (result.Failed) {
+                        reject({ id })
+                    }
+                    resolve({ id })
                 } catch (error) {
                     return reject({ id })
                 }
