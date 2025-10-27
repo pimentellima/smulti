@@ -1,16 +1,17 @@
 import { JobWithFormats } from './types'
+import { JobStatusSchema } from './zod/job'
 
-export function isJobProcessing(job?: JobWithFormats) {
+export function isJobProcessing(jobStatus?: JobStatusSchema) {
     return (
-        !!job &&
-        (job.status === 'processing' ||
-            job.status === 'waiting-to-process' ||
-            job.status === 'queued-processing')
+        !!jobStatus &&
+        (jobStatus === 'processing' ||
+            jobStatus === 'waiting-to-process' ||
+            jobStatus === 'queued-processing')
     )
 }
 
-export const isJobProcessingError = (job?: JobWithFormats) => {
-    return !!job && job.status === 'error-processing'
+export const isJobProcessingError = (jobStatus?: JobStatusSchema) => {
+    return jobStatus === 'error-processing'
 }
 
 export function getJobDownloadUrl(job?: JobWithFormats, formatId?: string) {

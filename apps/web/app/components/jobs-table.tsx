@@ -63,7 +63,7 @@ export function JobsTable({ data, columns, isLoading }: LinksTableProps) {
     })
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full my-4 space-x-1">
             <div className="rounded-md border bg-background">
                 <Table>
                     <TableHeader>

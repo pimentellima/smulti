@@ -1,33 +1,22 @@
+import { Format } from '@/common/types'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { getLanguageLabel } from '@/lib/dictionaries/language-labels'
-import { Check, ChevronDown, FileAudio, FileVideo } from 'lucide-react'
+import { Check, ChevronDown } from 'lucide-react'
 import { useLocale } from '../hooks/locale'
 
 interface FormatSelectosProps {
-    onSelect: (format: FormatOption) => void
-    formatOptions: FormatOption[]
-    selectedFormat: FormatOption | undefined
+    onSelect: (format: Format) => void
+    formats: Format[]
+    selectedFormat: Format | null
     isLoadingFormats?: boolean
     disabled?: boolean
-}
-
-export interface FormatOption {
-    id: string
-    ext: string
-    resolution?: string | null
-    acodec?: string | null
-    vcodec?: string | null
-    filesize?: number | null
-    formatNote?: string | null
-    language?: string | null
 }
 
 const formatDictionary = {
@@ -44,7 +33,7 @@ const formatDictionary = {
 }
 
 export default function FormatSelector({
-    formatOptions,
+    formats,
     onSelect,
     isLoadingFormats = false,
     disabled,
@@ -52,7 +41,7 @@ export default function FormatSelector({
 }: FormatSelectosProps) {
     const locale = useLocale()
 
-    const sortedFormats = formatOptions
+    const sortedFormats = formats
         .filter((a) => a.vcodec !== 'none' && a.acodec !== 'none')
         .sort((a, b) => {
             if (!a.resolution || !b.resolution) return 0
@@ -105,14 +94,14 @@ export default function FormatSelector({
     )
 }
 
-function FormatLabel({ format }: { format: FormatOption }) {
+function FormatLabel({ format }: { format: Format }) {
     const formatFileResolution = (resolution: string) => {
         const [_, height] = resolution.split('x')
         const heightNumber = parseInt(height!, 10)
         return `${heightNumber}p`
     }
 
-    const isHighQuality = (format: FormatOption) => {
+    const isHighQuality = (format: Format) => {
         if (!format.resolution) return false
         const [width, height] = format.resolution.split('x')
         const widthNumber = parseInt(width!, 10)
@@ -120,7 +109,7 @@ function FormatLabel({ format }: { format: FormatOption }) {
         return widthNumber >= 1080 && heightNumber >= 720
     }
 
-    const getFormatLabel = (format: FormatOption) => {
+    const getFormatLabel = (format: Format) => {
         if (format.resolution) {
             return `${format.ext} (${formatFileResolution(format.resolution)})`
         }

@@ -27,7 +27,7 @@ import {
     QueryClient,
 } from '@tanstack/react-query'
 import { Clock, Download, Music, Shield } from 'lucide-react'
-import { Suspense, useState } from 'react'
+import { useState } from 'react'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
 export function meta({}: any) {
     return [
@@ -63,15 +63,15 @@ export default function HomePage() {
 
     return (
         <main className="bg-card">
-            <section className="py-4 pb-14 w-full bg-linear-to-r from-[#2e2727] to-[#af2c39]">
-                <div className="mx-auto flex flex-col gap-3 items-center">
+            <section className="py-4 pb-14 px-4 w-full bg-linear-to-r from-[#2e2727] to-[#af2c39]">
+                <div className="mx-auto flex flex-col gap-3 items-center ">
                     <div className="flex items-center gap-1">
                         <DonateButton />
                         <LanguageSelector />
                     </div>
-                    <Card className='text-foreground bg-background my-auto w-5xl'>
+                    <Card className="text-foreground bg-background my-auto sm:w-5xl">
                         <CardHeader>
-                            <CardTitle className="text-center text-2xl md:text-3xl font-bold">
+                            <CardTitle className="text-center text-2xl sm:text-3xl font-bold">
                                 {dictionary.hero.title}
                             </CardTitle>
                             <CardDescription className="text-center text-sm">
@@ -79,12 +79,9 @@ export default function HomePage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <SubmitLinksForm setPageError={setPageError} />
-                            <Suspense fallback={<LoadingSkeleton />}>
-                                <HydrationBoundary state={dehydratedState}>
-                                    <Downloader />
-                                </HydrationBoundary>
-                            </Suspense>
+                            <HydrationBoundary state={dehydratedState}>
+                                <Downloader />
+                            </HydrationBoundary>
                         </CardContent>
                         <CardFooter className="flex justify-between">
                             {pageError && (
@@ -102,28 +99,28 @@ export default function HomePage() {
                 </div>
             </section>
 
-            <section className="container mx-auto py-8 md:py-14">
+            <section className="container mx-auto py-8 sm:py-14">
                 <div className="max-w-7xl mx-auto">
-                    <h2 className="text-xl md:text-xl font-semibold text-center mb-10">
+                    <h2 className="text-xl sm:text-xl font-semibold text-center mb-10">
                         {dictionary.features.title}
                     </h2>
-                    <div className="grid md:grid-cols-4 px-5 gap-6 md:gap-8">
+                    <div className="grid sm:grid-cols-4 px-5 gap-6 sm:gap-8">
                         <FeatureCard
-                            icon={<Clock className="h-6 md:h-8 w-6 md:w-8" />}
+                            icon={<Clock className="h-6 sm:h-8 w-6 sm:w-8" />}
                             title={dictionary.features.downloadMulti.title}
                             description={
                                 dictionary.features.downloadMulti.description
                             }
                         />
                         <FeatureCard
-                            icon={<Music className="h-6 md:h-8 w-6 md:w-8" />}
+                            icon={<Music className="h-6 sm:h-8 w-6 sm:w-8" />}
                             title={dictionary.features.createShare.title}
                             description={
                                 dictionary.features.createShare.description
                             }
                         />
                         <FeatureCard
-                            icon={<Shield className="h-6 md:h-8 w-6 md:w-8" />}
+                            icon={<Shield className="h-6 sm:h-8 w-6 sm:w-8" />}
                             title={dictionary.features.protect.title}
                             description={
                                 dictionary.features.protect.description
@@ -131,7 +128,7 @@ export default function HomePage() {
                         />
                         <FeatureCard
                             icon={
-                                <Download className="h-6 md:h-8 w-6 md:w-8" />
+                                <Download className="h-6 sm:h-8 w-6 sm:w-8" />
                             }
                             title={dictionary.features.simple.title}
                             description={dictionary.features.simple.description}
@@ -142,7 +139,7 @@ export default function HomePage() {
 
             <section className="container mx-auto mb-16 px-4 ">
                 <div className="max-w-3xl mx-auto">
-                    <h2 className="text-xl md:text-xl font-semibold text-center mb-10">
+                    <h2 className="text-xl sm:text-xl font-semibold text-center mb-10">
                         {dictionary.faq.title}
                     </h2>
                     <Accordion
@@ -162,7 +159,7 @@ export default function HomePage() {
                                         {item.question}
                                     </AccordionTrigger>
                                 </Button>
-                                <AccordionContent className="text-xs md:text-sm">
+                                <AccordionContent className="text-xs sm:text-sm">
                                     {item.answer}
                                 </AccordionContent>
                             </AccordionItem>
@@ -195,7 +192,7 @@ function FeatureCard({
         <div className="bg-muted rounded-lg p-6 shadow-sm border">
             <div className="text-primary mb-4">{icon}</div>
             <h3 className="mg:text-lg font-medium mb-2">{title}</h3>
-            <p className="text-xs md:text-base text-muted-foreground">
+            <p className="text-xs sm:text-base text-muted-foreground">
                 {description}
             </p>
         </div>
