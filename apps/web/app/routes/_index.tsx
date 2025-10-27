@@ -1,6 +1,4 @@
-import type { LoaderFunctionArgs } from 'react-router'
 import type { Route } from './+types/_index'
-import { redirect } from 'react-router'
 
 export function meta({}: Route.MetaArgs) {
     return [
@@ -9,6 +7,6 @@ export function meta({}: Route.MetaArgs) {
     ]
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
-    return redirect('/pt-BR')
+export default function Home() {
+    return <div>Olá mundo</div>
 }

@@ -33,11 +33,13 @@ import {
     ValidationMethod,
 } from 'aws-cdk-lib/aws-certificatemanager'
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets'
+import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs'
 
 interface MyStackProps extends StackProps {
     s3StaticBucketName: string
     s3FilesBucketName: string
     region: string
+    apiName: string
 }
 
 export class DeploymentService extends Construct {
@@ -76,18 +78,23 @@ export class DeploymentService extends Construct {
 
         // Deploy SSR Lambda e criação de Api Gateway
 
-        const ssr = new Function(this, 'Function', {
+        const ssr = new NodejsFunction(this, 'SsrServerFunction', {
             runtime: Runtime.NODEJS_20_X,
-            code: Code.fromAsset(
-                resolve(__dirname, '../../apps/web/build/server'),
-            ),
-            handler: 'index.handler',
+            entry: resolve(__dirname, '../../apps/web/server.js'),
+            handler: 'handler',
+            timeout: Duration.seconds(29),
+            bundling: {
+                format: OutputFormat.CJS, 
+                platform: 'node',
+                target: 'node20',
+                externalModules: ['@aws-sdk/*'],
+            },
         })
 
         const integration = new HttpLambdaIntegration('SsrHttpIntegration', ssr)
 
         const httpApi = new HttpApi(this, 'SsrHttpApi', {
-            apiName: 'ssr-api',
+            apiName: props.apiName,
             defaultIntegration: integration,
             createDefaultStage: true,
         })
@@ -122,6 +129,7 @@ export class DeploymentService extends Construct {
             defaultBehavior: {
                 origin: new HttpOrigin(
                     `${httpApi.apiId}.execute-api.${props.region}.amazonaws.com`,
+                    { originPath: '/$default' },
                 ),
                 viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             },
