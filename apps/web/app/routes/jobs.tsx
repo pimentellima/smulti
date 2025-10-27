@@ -5,7 +5,7 @@ import {
     batchUpdateJobStatus,
     createJobs,
     createRequest,
-    getItemsInQueueCount
+    getItemsInQueueCount,
 } from '@/core/api'
 import { addJobsToProcessQueue } from '@/core/aws/sqs'
 import type { Route } from './+types/jobs'

@@ -10,8 +10,9 @@ import {
     upsertMergedFormat,
 } from '@/core/api'
 import { addMergedFormatToConvertQueue } from '@/core/aws/sqs'
+import { Route } from './+types/jobs.$jobId.$formatId'
 
-export async function action({ params, request }: any) {
+export async function action({ params, request }: Route.ActionArgs) {
     try {
         if (request.method === 'POST') {
             const { formatId, jobId } = jobFormatSchema.parse({

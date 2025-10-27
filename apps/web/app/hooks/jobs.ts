@@ -13,7 +13,7 @@ export function useJobs(requestId: string | null) {
     return useQuery<JobWithFormats[]>({
         queryKey: ['jobs', requestId],
         queryFn: async () => {
-            const response = await fetch(`/jobs/${requestId}`)
+            const response = await fetch(`/requests/${requestId}`)
             if (!response.ok) {
                 throw new Error('Failed to fetch jobs')
             }
@@ -81,7 +81,7 @@ export function useCancelJob() {
 
     return useMutation({
         mutationFn: async (jobId: string) => {
-            const response = await fetch(`/jobs/${jobId}/cancel`, {
+            const response = await fetch(`/jobs/${jobId}`, {
                 method: 'PUT',
             })
             if (!response.ok) {
