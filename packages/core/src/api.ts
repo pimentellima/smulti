@@ -7,11 +7,10 @@ import {
     and,
     eq,
     inArray,
-    isNotNull,
     not,
     or,
     sql,
-    type InferInsertModel,
+    type InferInsertModel
 } from 'drizzle-orm'
 import { z } from 'zod'
 

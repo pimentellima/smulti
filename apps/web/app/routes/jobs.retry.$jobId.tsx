@@ -21,8 +21,8 @@ export async function action({ request, params }: Route.ActionArgs) {
             }
 
             const result = await addJobsToProcessQueue([job.id])
-            const isError = result.Failed?.map((f) => f.Id).includes(job.id)
-            await updateJobStatus(
+            const isError = result.Failed?.length
+            return await updateJobStatus(
                 job.id,
                 isError ? 'error-processing' : 'queued-processing',
             )
