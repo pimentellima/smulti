@@ -43,6 +43,15 @@ export class DeploymentService extends Construct {
     constructor(scope: Construct, id: string) {
         super(scope, id)
 
+        // Bucket de uploads com acesso público
+        const uploadsBucket = new Bucket(this, 'UploadsBucket', {
+            bucketName: process.env.S3_UPLOADS_BUCKET_NAME!,
+            removalPolicy: RemovalPolicy.RETAIN,
+            autoDeleteObjects: false,
+            publicReadAccess: true,
+            blockPublicAccess: BlockPublicAccess.BLOCK_ACLS_ONLY,
+        })
+
         // Bucket de estáticos do front end com acesso público desabilitado
         const staticAssetsBucket = new Bucket(this, 'StaticAssetsBucket', {
             bucketName: process.env.S3_STATIC_BUCKET_NAME!,
@@ -183,10 +192,7 @@ export class DeploymentService extends Construct {
         const dlqFunction = new NodejsFunction(this, 'DLQProcessor', {
             runtime: Runtime.NODEJS_20_X,
             handler: 'handler',
-            entry: resolve(
-                __dirname,
-                '../../functions/dlq/src/index.ts',
-            ),
+            entry: resolve(__dirname, '../../functions/dlq/src/index.ts'),
             environment: {
                 DATABASE_URL: process.env.DATABASE_URL!,
             },
@@ -207,7 +213,7 @@ export class DeploymentService extends Construct {
         // Concede permissão para a função SSR enviar mensagens para o processQueue
         processQueue.grantSendMessages(ssr)
 
-        // Deploy da função Lambda de processamento de jobs 
+        // Deploy da função Lambda de processamento de jobs
         const processFunction = new DockerImageFunction(
             this,
             'ProcessFunction',
@@ -228,7 +234,7 @@ export class DeploymentService extends Construct {
         // Conecta SQS a Lambda
         processFunction.addEventSource(new SqsEventSource(processQueue))
 
-          // Fila SQS para download de jobs
+        // Fila SQS para download de jobs
         const downloadQueue = new Queue(this, 'DownloadQueue', {
             queueName: process.env.SQS_DOWNLOAD_QUEUE_NAME,
             visibilityTimeout: Duration.minutes(10),
@@ -240,7 +246,7 @@ export class DeploymentService extends Construct {
         // Concede permissão para a função SSR enviar mensagens para o downloadQueue
         downloadQueue.grantSendMessages(ssr)
 
-        // Deploy da função Lambda de download de jobs 
+        // Deploy da função Lambda de download de jobs
         const downloadFunction = new DockerImageFunction(
             this,
             'DownloadFunction',
@@ -265,10 +271,7 @@ export class DeploymentService extends Construct {
         const cronLambda = new NodejsFunction(this, 'EnqueLambda', {
             runtime: Runtime.NODEJS_20_X,
             handler: 'handler',
-            entry: resolve(
-                __dirname,
-                '../../functions/enque/src/index.ts',
-            ),
+            entry: resolve(__dirname, '../../functions/enque/src/index.ts'),
             bundling: {
                 format: OutputFormat.CJS,
                 platform: 'node',
@@ -290,7 +293,7 @@ export class DeploymentService extends Construct {
         // Adiciona a Lambda como alvo da regra
         rule.addTarget(new LambdaFunctionTarget(cronLambda))
 
-        /// Deploy de bucket s3
+        /// Deploy de buckets s3
         new BucketDeployment(this, 'StaticAssetsBucketDeployment', {
             sources: [
                 Source.asset(resolve(__dirname, '../../apps/web/build/client')),
@@ -298,6 +301,11 @@ export class DeploymentService extends Construct {
             destinationBucket: staticAssetsBucket,
             distribution,
             distributionPaths: ['/*'],
+        })
+
+        new BucketDeployment(this, 'BucketDeployment', {
+            sources: [],
+            destinationBucket: uploadsBucket,
         })
 
         /// Outputs
