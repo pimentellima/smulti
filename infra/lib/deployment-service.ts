@@ -191,7 +191,7 @@ export class DeploymentService extends Construct {
         // Fila SQS para processamento de jobs
         const processQueue = new Queue(this, 'ProcessQueue', {
             queueName: process.env.SQS_PROCESS_QUEUE_NAME,
-            visibilityTimeout: Duration.minutes(1),
+            visibilityTimeout: Duration.minutes(6),
         })
         // Concede permissão para a função SSR enviar mensagens para o processQueue
         processQueue.grantSendMessages(ssr)
@@ -201,7 +201,7 @@ export class DeploymentService extends Construct {
             this,
             'ProcessFunction',
             {
-                timeout: Duration.minutes(1),
+                timeout: Duration.minutes(5),
                 code: DockerImageCode.fromImageAsset(
                     resolve(__dirname, '../../functions/process-worker'),
                     {
