@@ -3,15 +3,21 @@ import type { CreateJobsSchema } from '@/common/zod/job'
 import { handleApiResponse } from '@/lib/utils/handle-api-response'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { useLocale } from './locale'
-import { loadDictionary } from '@/lib/dictionaries/load-dictionary'
 import useDictionary from './dictionary'
 
 export function useJobs(requestId: string | null) {
+    const queryClient = useQueryClient()
     return useQuery<JobWithFormats[]>({
         queryKey: ['jobs', { requestId }],
-        queryFn: async () =>
-            handleApiResponse(await fetch(`/requests/${requestId}`)),
+        queryFn: async () => {
+            const jobs = (await handleApiResponse(
+                await fetch(`/requests/${requestId}`),
+            )) as JobWithFormats[]
+            jobs.map((job) =>
+                queryClient.setQueryData(['jobs', { jobId: job.id }], job),
+            )
+            return jobs
+        },
         enabled: !!requestId,
         refetchOnWindowFocus: false,
     })

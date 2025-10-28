@@ -31,7 +31,7 @@ export default function Downloader() {
             {
                 id: 'actions',
                 header: dictionary.actions,
-                cell: ({ row }) => <JobActions job={row.original} />,
+                cell: ({ row }) => <JobActions jobId={row.original.id} />,
                 size: 25,
                 maxSize: 25,
             },

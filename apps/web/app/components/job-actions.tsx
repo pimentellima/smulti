@@ -1,18 +1,18 @@
-import { Format, JobWithFormats } from '@/common/types'
+import { Format } from '@/common/types'
 import {
     getJobDownloadUrl,
     isJobProcessing,
     isJobProcessingError,
 } from '@/common/utils'
-import { useRealtimeJob } from '@/hooks/realtime-job'
 import { useRetryJob } from '@/hooks/jobs'
 import { useLocale } from '@/hooks/locale'
+import { useRealtimeJob } from '@/hooks/realtime-job'
+import { XIcon } from 'lucide-react'
 import { useState } from 'react'
 import CancelJobButton from './cancel-job-button'
 import DownloadJobButton from './download-job-button'
 import FormatSelector from './format-selector'
 import { Button } from './ui/button'
-import { XIcon } from 'lucide-react'
 
 const dictionary = {
     'en-US': {
@@ -25,17 +25,17 @@ const dictionary = {
     },
 }
 
-export default function JobActions({ job }: { job: JobWithFormats }) {
+export default function JobActions({ jobId }: { jobId: string }) {
     const locale = useLocale()
     const [selectedFormat, setSelectedFormat] = useState<Format | null>(null)
     const formatId = selectedFormat?.id
-    const { data: realtimeJob } = useRealtimeJob(job.id)
+    const { data: job } = useRealtimeJob(jobId)
 
     const { mutate: retryProcessing } = useRetryJob()
 
-    const isProcessing = isJobProcessing(realtimeJob?.status)
+    const isProcessing = isJobProcessing(job?.status)
     const downloadUrl = getJobDownloadUrl(job, formatId)
-    const isError = isJobProcessingError(realtimeJob?.status)
+    const isError = isJobProcessingError(job?.status)
 
     return (
         <div className="flex gap-1 w-min">
@@ -62,21 +62,21 @@ export default function JobActions({ job }: { job: JobWithFormats }) {
                 </Button>
             ) : (
                 <FormatSelector
-                    formats={job.formats}
+                    formats={job?.formats}
                     selectedFormat={selectedFormat}
-                    disabled={job.formats.length === 0 || isProcessing}
+                    disabled={job?.formats.length === 0 || isProcessing}
                     isLoadingFormats={isProcessing}
                     onSelect={(format) => setSelectedFormat(format)}
                 />
             )}
             <DownloadJobButton
                 isFormatSelected={!!formatId}
-                onClickRetry={() => retryProcessing(job.id)}
+                onClickRetry={() => retryProcessing(jobId)}
                 isProcessing={isProcessing ?? false}
                 isError={isError ?? false}
                 downloadUrl={downloadUrl}
             />
-            <CancelJobButton jobId={job.id} />
+            <CancelJobButton jobId={jobId} />
         </div>
     )
 }

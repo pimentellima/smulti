@@ -44,6 +44,9 @@ export function useRealtimeJob(jobId: string) {
                             status: newStatus,
                         }),
                     )
+                    if (newStatus === 'finished-processing') {
+                        await jobQuery.refetch()
+                    }
                 },
             )
             .subscribe()

@@ -178,7 +178,7 @@ export class DeploymentService extends Construct {
             target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         })
 
-           new ARecord(this, 'RootAlias', {
+        new ARecord(this, 'RootAlias', {
             zone,
             target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         })

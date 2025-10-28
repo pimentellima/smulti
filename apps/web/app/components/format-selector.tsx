@@ -13,7 +13,7 @@ import { useLocale } from '../hooks/locale'
 
 interface FormatSelectosProps {
     onSelect: (format: Format) => void
-    formats: Format[]
+    formats?: Format[]
     selectedFormat: Format | null
     isLoadingFormats?: boolean
     disabled?: boolean
@@ -42,7 +42,7 @@ export default function FormatSelector({
     const locale = useLocale()
 
     const sortedFormats = formats
-        .filter((a) => a.vcodec !== 'none' && a.acodec !== 'none')
+        ?.filter((a) => a.vcodec !== 'none' && a.acodec !== 'none')
         .sort((a, b) => {
             if (!a.resolution || !b.resolution) return 0
             const aWidth = parseInt(a.resolution.split('x')[0]!, 10)
@@ -72,7 +72,7 @@ export default function FormatSelector({
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-min sm:w-48 max-h-[300px] overflow-y-auto">
                 <DropdownMenuGroup>
-                    {sortedFormats.map((format) => (
+                    {sortedFormats?.map((format) => (
                         <DropdownMenuItem
                             key={format.id}
                             onClick={() => {
