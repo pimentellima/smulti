@@ -16,7 +16,7 @@ const dictionary = {
     },
 }
 
-export default function DownloadJobButton({
+export default function DownloadButton({
     isFormatSelected,
     downloadUrl,
 }: JobDownloadButtonProps) {

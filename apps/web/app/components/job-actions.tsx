@@ -9,7 +9,7 @@ import { useLocale } from '@/hooks/locale'
 import { LoaderCircle, XIcon } from 'lucide-react'
 import { useState } from 'react'
 import CancelJobButton from './cancel-job-button'
-import DownloadJobButton from './download-job-button'
+import DownloadButton from './download-button'
 import FormatSelector from './format-selector'
 import { Button } from './ui/button'
 
@@ -74,7 +74,7 @@ export default function JobActions({
                     onSelect={(format) => setSelectedFormat(format)}
                 />
             )}
-            <DownloadJobButton
+            <DownloadButton
                 isFormatSelected={!!formatId}
                 downloadUrl={downloadUrl}
             />
