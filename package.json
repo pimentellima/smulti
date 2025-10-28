@@ -9,7 +9,7 @@
     "scripts": {
         "build": "next build && echo 'Build complete'",
         "dev": "npm exec -ws -- npm run dev --if-present",
-        "deploy": "npm install && npm run build && cd infra && npm install && npm run cdk-synth && npm run cdk-deploy"
+        "deploy": "npm install && npm run build && cd infra && npm run cdk-deploy"
     },
     "devDependencies": {
         "@tsconfig/node22": "^22",
