@@ -203,7 +203,7 @@ export class DeploymentService extends Construct {
             {
                 timeout: Duration.minutes(5),
                 code: DockerImageCode.fromImageAsset(
-                    resolve(__dirname, '../../functions/process-worker'),
+                    resolve(__dirname, '../../functions/worker'),
                     {
                         file: 'Dockerfile', // caminho relativo ao diretório atual
                     },

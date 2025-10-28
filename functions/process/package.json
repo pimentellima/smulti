@@ -1,5 +1,5 @@
 {
-    "name": "@smulti/process-worker",
+    "name": "@smulti/process",
     "private": true,
     "type": "module"
 }
