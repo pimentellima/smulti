@@ -60,7 +60,7 @@ export default function FormatSelector({
                 <Button
                     disabled={disabled}
                     variant="outline"
-                    className="justify-between w-min sm:w-48"
+                    className="justify-between w-min sm:w-44"
                 >
                     {selectedFormat ? (
                         <FormatLabel format={selectedFormat} />
@@ -70,7 +70,7 @@ export default function FormatSelector({
                     <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-min sm:w-48 max-h-[300px] overflow-y-auto">
+            <DropdownMenuContent className="w-min sm:w-44 max-h-[300px] overflow-y-auto">
                 <DropdownMenuGroup>
                     {sortedFormats?.map((format) => (
                         <DropdownMenuItem

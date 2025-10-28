@@ -57,7 +57,7 @@ body {
 }
 
 :root {
-    --radius: 0.625rem;
+    --radius: 0.5rem;
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
@@ -72,7 +72,7 @@ body {
     --muted-foreground: oklch(0.556 0 0);
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
+    --destructive: oklch(48.935% 0.1576 20.445);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.708 0 0);
@@ -130,6 +130,6 @@ body {
         @apply border-border outline-ring/50;
     }
     body {
-        @apply bg-background text-foreground
+        @apply bg-background text-foreground;
     }
 }
