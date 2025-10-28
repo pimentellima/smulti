@@ -17,6 +17,14 @@ export const jobStatusEnum = pgEnum('job_status', [
     'finished-processing',
 ])
 
+export const downloadStatusEnum = pgEnum('download_status', [
+    'downloading',
+    'error-downloading',
+    'finished-downloading',
+    'waiting-to-download',
+    'queued-downloading',
+])
+
 export const jobs = pgTable('jobs', {
     id: uuid('id').primaryKey().defaultRandom(),
     requestId: uuid('request_id')
@@ -42,6 +50,8 @@ export const formats = pgTable('formats', {
     tbr: text('tbr'),
     url: text('url').notNull(),
     language: text('language'),
+    downloadUrl: text('download_url'),
+    downloadStatus: downloadStatusEnum('download_status'),
     formatNote: text('format_note'),
     createdAt: timestamp('created_at').defaultNow(),
 })
