@@ -1,6 +1,6 @@
 import { CONCURRENT_JOB_LIMIT } from '@/common/constants'
 import { ApiError, handleApiError } from '@/common/errors'
-import { createJobsSchema } from '@/common/zod/job'
+import { createJobsSchema } from '@/common/zod'
 import {
     batchUpdateJobStatus,
     createJobs,

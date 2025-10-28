@@ -1,16 +1,17 @@
 import { ApiError } from '@/common/errors'
 import { Job, JobWithFormats } from '@/common/types'
-import { JobStatusSchema } from '@/common/zod/job'
+import { FormatDownload, JobStatus } from '@/common/zod'
 import { db, type DatabaseType } from '@/db/client'
 import { formats, jobs as jobsTable, requests } from '@/db/schema'
 import {
     and,
     eq,
     inArray,
+    isNotNull,
     not,
     or,
     sql,
-    type InferInsertModel
+    type InferInsertModel,
 } from 'drizzle-orm'
 import { z } from 'zod'
 
@@ -115,7 +116,7 @@ export async function updateJob(
 
 export const updateJobStatus = async (
     id: string,
-    status: JobStatusSchema,
+    status: JobStatus,
     tx?: DatabaseType,
 ) => {
     const database = tx || db
@@ -138,7 +139,7 @@ export const updateJobStatus = async (
 
 export const batchUpdateJobStatus = async (
     ids: string[],
-    status: JobStatusSchema,
+    status: JobStatus,
     tx?: DatabaseType,
 ) => {
     if (ids.length === 0) return []

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { jobStatusEnum } from '@/db/schema'
+import { downloadStatusEnum, jobStatusEnum } from '@/db/schema'
 
 export const createJobsSchema = z.object({
     requestId: z.string().uuid().nullish(),
@@ -7,7 +7,10 @@ export const createJobsSchema = z.object({
 })
 
 export const statusEnum = z.enum(jobStatusEnum.enumValues)
-export type JobStatusSchema = z.infer<typeof statusEnum>
+export type JobStatus = z.infer<typeof statusEnum>
+
+export const downloadStatus = z.enum(downloadStatusEnum.enumValues)
+export type DownloadStatus = z.infer<typeof downloadStatus>
 
 export const downloadJobByRequestSchema = z.object({
     requestId: z.string().uuid(),
@@ -25,3 +28,10 @@ export const convertSchema = z.object({
 })
 
 export type CreateJobsSchema = z.infer<typeof createJobsSchema>
+
+export type FormatDownload = {
+    title: string
+    thumbnail?: string
+    downloadStatus: DownloadStatus
+    downloadUrl?: string
+}

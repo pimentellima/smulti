@@ -1,5 +1,5 @@
 import type { Job, JobWithFormats } from '@/common/types'
-import type { CreateJobsSchema, JobStatusSchema } from '@/common/zod/job'
+import type { CreateJobsSchema, JobStatus } from '@/common/zod'
 import { supabase } from '@/lib/supabase/client'
 import { handleApiResponse } from '@/lib/utils/handle-api-response'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -8,26 +8,44 @@ import { toast } from 'sonner'
 import useDictionary from './dictionary'
 
 export function useJobs(requestId: string | null) {
-    const queryClient = useQueryClient()
-    return useQuery<JobWithFormats[]>({
+    const query = useQuery<JobWithFormats[]>({
         queryKey: ['jobs', { requestId }],
         queryFn: async () =>
-            (await handleApiResponse(
-                await fetch(`/requests/${requestId}`),
-            )) as JobWithFormats[],
+            await handleApiResponse(await fetch(`/jobs/request/${requestId}`)),
         enabled: !!requestId,
         refetchOnWindowFocus: false,
     })
+
+    useEffect(() => {
+        if (!requestId) return
+
+        const channel = supabase
+            .channel(`jobs-status-${requestId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'jobs',
+                    filter: `request_id=eq.${requestId}`,
+                },
+                async () => await query.refetch(),
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [requestId])
+
+    return query
 }
 
 export function useCreateJobs() {
-    const queryClient = useQueryClient()
     const dictionary = useDictionary()
     return useMutation({
-        mutationFn: async (
-            jobs: CreateJobsSchema,
-        ): Promise<{ requestId: string }> =>
-            handleApiResponse(
+        mutationFn: async (jobs: CreateJobsSchema) =>
+            handleApiResponse<{ requestId: string }>(
                 await fetch(`/jobs`, {
                     method: 'POST',
                     headers: {
@@ -37,11 +55,10 @@ export function useCreateJobs() {
                 }),
             ),
         onError: () => toast.error(dictionary.error.create_job),
-        onSuccess: async (data) => {
-            await queryClient.invalidateQueries({
+        onSuccess: async (data, variables, _, context) =>
+            context.client.invalidateQueries({
                 queryKey: ['jobs', { requestId: data.requestId }],
-            })
-        },
+            }),
     })
 }
 
@@ -93,75 +110,19 @@ export function useRetryJob(jobId: string) {
     })
 }
 
-export function useCancelJob() {
-    const queryClient = useQueryClient()
+export function useCancelJob(jobId: string) {
     const dictionary = useDictionary()
     return useMutation({
-        mutationFn: async (jobId: string) =>
+        mutationFn: async () =>
             handleApiResponse(
                 await fetch(`/jobs/${jobId}`, {
                     method: 'PUT',
                 }),
             ),
         onError: () => toast.error(dictionary.error.cancel_job),
-        onSuccess: async () => {
-            await queryClient.refetchQueries({
-                queryKey: ['jobs'],
-            })
-        },
+        onSuccess: async (data, variables, _, context) =>
+            context.client.invalidateQueries({
+                queryKey: ['jobs', { jobId }],
+            }),
     })
-}
-
-type SupabaseRealtimePayload = {
-    schema: string
-    table: string
-    eventType: 'INSERT' | 'UPDATE' | 'DELETE'
-    old: Job
-    new: Job
-}
-
-export function useJob(initialData?: JobWithFormats) {
-    const queryClient = useQueryClient()
-    const jobId = initialData?.id
-
-    const jobQuery = useQuery<JobWithFormats>({
-        queryKey: ['jobs', { jobId }],
-        queryFn: async () => handleApiResponse(await fetch(`/jobs/${jobId}`)),
-        initialData,
-        enabled: !!jobId,
-    })
-
-    useEffect(() => {
-        if (!jobId) return
-
-        const channel = supabase
-            .channel(`jobs-status-${jobId}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'jobs',
-                    filter: `id=eq.${jobId}`,
-                },
-                async (payload) => {
-                    const newStatus = payload.new.status as JobStatusSchema
-                    await queryClient.setQueryData(
-                        ['jobs', { jobId }],
-                        (oldData: JobWithFormats) => ({
-                            ...oldData,
-                            status: newStatus,
-                        }),
-                    )
-                    await jobQuery.refetch()
-                },
-            )
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [jobId])
-
-    return jobQuery
 }

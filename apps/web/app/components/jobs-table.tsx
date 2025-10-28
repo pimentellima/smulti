@@ -56,7 +56,7 @@ export function JobsTable() {
                 accessorKey: 'actions',
                 id: 'actions',
                 header: dictionary.actions,
-                cell: ({ row }) => <JobActions initialJobData={row.original} />,
+                cell: ({ row }) => <JobActions job={row.original} />,
             },
             {
                 accessorKey: 'title',

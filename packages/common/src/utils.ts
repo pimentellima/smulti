@@ -1,7 +1,7 @@
 import { JobWithFormats } from './types'
-import { JobStatusSchema } from './zod/job'
+import { JobStatus } from './zod'
 
-export function isJobProcessing(jobStatus?: JobStatusSchema) {
+export function isJobProcessing(jobStatus?: JobStatus) {
     return (
         !!jobStatus &&
         (jobStatus === 'processing' ||
@@ -10,7 +10,7 @@ export function isJobProcessing(jobStatus?: JobStatusSchema) {
     )
 }
 
-export const isJobProcessingError = (jobStatus?: JobStatusSchema) => {
+export const isJobProcessingError = (jobStatus?: JobStatus) => {
     return jobStatus === 'error-processing'
 }
 

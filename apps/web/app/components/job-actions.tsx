@@ -4,7 +4,7 @@ import {
     isJobProcessing,
     isJobProcessingError,
 } from '@/common/utils'
-import { useJob, useRetryJob } from '@/hooks/jobs'
+import { useRetryJob } from '@/hooks/jobs'
 import { useLocale } from '@/hooks/locale'
 import { LoaderCircle, XIcon } from 'lucide-react'
 import { useState } from 'react'
@@ -25,18 +25,15 @@ const dictionary = {
 }
 
 export default function JobActions({
-    initialJobData,
+    job,
 }: {
-    initialJobData: JobWithFormats
+    job: JobWithFormats
 }) {
     const locale = useLocale()
     const [selectedFormat, setSelectedFormat] = useState<Format | null>(null)
     const formatId = selectedFormat?.id
-    const jobId = initialJobData.id
-    const { data: job } = useJob(initialJobData)
-
-    const { mutate: retryJob } = useRetryJob(initialJobData.id)
-
+    const jobId = job.id
+    const { mutate: retryJob } = useRetryJob(job.id)
     const isProcessing = isJobProcessing(job?.status)
     const downloadUrl = getJobDownloadUrl(job, formatId)
     const isError = isJobProcessingError(job?.status)
