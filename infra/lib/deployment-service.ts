@@ -223,7 +223,7 @@ export class DeploymentService extends Construct {
             handler: 'handler',
             entry: resolve(
                 __dirname,
-                '../../functions/enque/src/enque-jobs.ts',
+                '../../functions/enque/src/index.ts',
             ),
             bundling: {
                 format: OutputFormat.CJS,
