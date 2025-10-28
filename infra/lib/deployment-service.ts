@@ -188,10 +188,33 @@ export class DeploymentService extends Construct {
             target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         })
 
+        // Fila DLQ
+        const dlq = new Queue(this, 'DeadLetterQueue', {
+            visibilityTimeout: Duration.seconds(60),
+        })
+        const dlqFunction = new NodejsFunction(this, 'DLQProcessor', {
+            runtime: Runtime.NODEJS_20_X,
+            handler: 'handler',
+            entry: resolve(
+                __dirname,
+                '../../functions/dlq/src/index.ts',
+            ),
+            environment: {
+                DATABASE_URL: process.env.DATABASE_URL!,
+            },
+            timeout: Duration.seconds(45),
+        })
+        dlq.grantConsumeMessages(dlqFunction)
+        dlqFunction.addEventSource(new SqsEventSource(dlq))
+
         // Fila SQS para processamento de jobs
         const processQueue = new Queue(this, 'ProcessQueue', {
             queueName: process.env.SQS_PROCESS_QUEUE_NAME,
             visibilityTimeout: Duration.minutes(6),
+            deadLetterQueue: {
+                queue: dlq,
+                maxReceiveCount: 3,
+            },
         })
         // Concede permissão para a função SSR enviar mensagens para o processQueue
         processQueue.grantSendMessages(ssr)
