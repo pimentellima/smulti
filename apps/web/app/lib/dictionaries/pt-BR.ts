@@ -94,7 +94,7 @@ export const dictionary = {
     error: {
         login: 'Falha ao fazer login. Verifique suas credenciais e tente novamente.',
         cancel_job: 'Falha ao cancelar. Tente novamente.',
-        retry_job: 'Falha ao tentar novamente. Tente novamente.',
+        retry_job: 'Falha ao reprocessar. Tente novamente.',
         create_job: 'Falha ao criar. Tente novamente.',
         default: 'An unexpected error occurred. Please try again later.',
         unprocessable_entity:
