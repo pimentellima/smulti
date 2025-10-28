@@ -53,7 +53,14 @@ export function JobsTable() {
     const columns: ColumnDef<JobWithFormats>[] = useMemo(
         () => [
             {
+                accessorKey: 'actions',
+                id: 'actions',
+                header: dictionary.actions,
+                cell: ({ row }) => <JobActions jobId={row.original.id} />,
+            },
+            {
                 accessorKey: 'title',
+                id: 'title',
                 header: dictionary.title,
                 cell: ({ row }) => {
                     return (
@@ -67,11 +74,6 @@ export function JobsTable() {
                         </div>
                     )
                 },
-            },
-            {
-                id: 'actions',
-                header: dictionary.actions,
-                cell: ({ row }) => <JobActions jobId={row.original.id} />,
             },
         ],
         [jobs],
@@ -91,7 +93,7 @@ export function JobsTable() {
 
     return (
         <div className="space-y-4 w-full my-4 space-x-1 ">
-            <div className="rounded-md border bg-background max-w-[80vw] lg:max-w-full overflow-auto">
+            <div className="rounded-md border bg-background max-w-[80vw] md:max-w-full overflow-auto">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (

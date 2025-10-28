@@ -56,13 +56,13 @@ export default function HomePage() {
 
     return (
         <main className="bg-card">
-            <section className="py-4 pb-14 px-4 w-full bg-linear-to-r from-[#2e2727] to-[#af2c39]">
+            <section className="py-4 pb-14 px-2 w-full bg-linear-to-r from-[#2e2727] to-[#af2c39]">
                 <div className="mx-auto flex flex-col gap-3 items-center ">
                     <div className="flex items-center gap-1">
                         <DonateButton />
                         <LanguageSelector />
                     </div>
-                    <Card className="text-foreground bg-background my-auto xl:w-5xl">
+                    <Card className="text-foreground bg-background my-auto md:w-3xl lg:w-5xl">
                         <CardHeader>
                             <CardTitle className="text-center text-2xl md:text-3xl font-bold">
                                 {dictionary.hero.title}
