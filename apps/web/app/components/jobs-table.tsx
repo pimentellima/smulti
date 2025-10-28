@@ -79,8 +79,17 @@ export function JobsTable() {
         [jobs],
     )
 
+    const sortedJobs = useMemo(() => {
+        if (!jobs) return []
+        return jobs.sort(
+            (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+        )
+    }, [jobs])
+
     const table = useReactTable({
-        data: jobs ?? [],
+        data: sortedJobs,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),

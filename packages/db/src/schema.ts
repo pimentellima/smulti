@@ -25,6 +25,7 @@ export const jobs = pgTable('jobs', {
     url: text('url').notNull(),
     status: jobStatusEnum('status').notNull(),
     title: text('title'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
 export const formats = pgTable('formats', {
