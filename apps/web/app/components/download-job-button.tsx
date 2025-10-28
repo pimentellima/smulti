@@ -10,29 +10,9 @@ interface JobDownloadButtonProps {
 const dictionary = {
     'en-US': {
         download: 'Download',
-        'error-try-again':
-            'An error occurred while downloading. Please try again.',
-        error: 'Error',
-        cancelled: 'Cancelled',
-        'queued-processing': 'Queued',
-        processing: 'Processing',
-        'finished-processing': 'Processed',
-        ready: 'Ready',
-        'queued-converting': 'Queued',
-        selectFormat: 'Select a format from the list',
-        unsupportedFormat: 'Unsupported format',
     },
     'pt-BR': {
         download: 'Baixar',
-        'error-try-again':
-            'Ocorreu um erro ao baixar. Por favor, tente novamente.',
-        'queued-processing': 'Na fila',
-        processing: 'Processando',
-        'finished-processing': 'Processado',
-        ready: 'Pronto',
-        'queued-converting': 'Na fila',
-        selectFormat: 'Selecione um formato da lista',
-        unsupportedFormat: 'Formato não Suportado',
     },
 }
 
