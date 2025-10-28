@@ -4,9 +4,7 @@ import {
     findJobsWaitingToProcess,
     getItemsInQueueCount,
 } from '@/core/api'
-import {
-    addJobsToProcessQueue
-} from '@/core/index'
+import { addJobsToProcessQueue } from '@/core/index'
 import { Handler } from 'aws-lambda'
 
 export const handler: Handler = async () => {
@@ -18,8 +16,16 @@ export const handler: Handler = async () => {
             .filter((job) => job.jobStatus === 'waiting-to-process')
             .map((job) => job.jobId)
 
-        await batchUpdateJobStatus(jobsToEnque, 'queued-processing')
-        await addJobsToProcessQueue(jobsToEnque)
+        const result = await addJobsToProcessQueue(jobsToEnque)
+        const erroredJobIds =
+            result.Failed?.map((res) => res.Id).filter(
+                (id): id is string => !!id,
+            ) || []
+        const successfulJobIds = jobsToEnque.filter(
+            (id) => !erroredJobIds.includes(id),
+        )
+        await batchUpdateJobStatus(erroredJobIds, 'error-processing')
+        await batchUpdateJobStatus(successfulJobIds, 'processing')
 
         return {
             statusCode: 200,
