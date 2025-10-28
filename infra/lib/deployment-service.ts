@@ -19,7 +19,7 @@ import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-t
 import {
     DockerImageCode,
     DockerImageFunction,
-    Runtime
+    Runtime,
 } from 'aws-cdk-lib/aws-lambda'
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs'
@@ -85,6 +85,8 @@ export class DeploymentService extends Construct {
                 S3_UPLOADS_BUCKET_NAME: process.env.S3_UPLOADS_BUCKET_NAME!,
                 DATABASE_URL: process.env.DATABASE_URL!,
                 SQS_PROCESS_QUEUE_NAME: process.env.SQS_PROCESS_QUEUE_NAME!,
+                VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL!,
+                VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY!,
             },
             bundling: {
                 format: OutputFormat.CJS,
@@ -176,6 +178,16 @@ export class DeploymentService extends Construct {
             target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         })
 
+           new ARecord(this, 'RootAlias', {
+            zone,
+            target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
+        })
+
+        new AaaaRecord(this, 'RootAliasIPv6', {
+            zone,
+            target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
+        })
+
         // Fila SQS para processamento de jobs
         const processQueue = new Queue(this, 'ProcessQueue', {
             queueName: process.env.SQS_PROCESS_QUEUE_NAME,
@@ -209,7 +221,10 @@ export class DeploymentService extends Construct {
         const cronLambda = new NodejsFunction(this, 'EnqueLambda', {
             runtime: Runtime.NODEJS_20_X,
             handler: 'handler',
-            entry: resolve(__dirname, '../../functions/enque-service/src/enque-jobs.ts'),
+            entry: resolve(
+                __dirname,
+                '../../functions/enque-service/src/enque-jobs.ts',
+            ),
             bundling: {
                 format: OutputFormat.CJS,
                 platform: 'node',
@@ -231,7 +246,6 @@ export class DeploymentService extends Construct {
         // Adiciona a Lambda como alvo da regra
         rule.addTarget(new LambdaFunctionTarget(cronLambda))
 
-     
         /// Deploy de buckets s3
         new BucketDeployment(this, 'StaticAssetsBucketDeployment', {
             sources: [
@@ -255,6 +269,5 @@ export class DeploymentService extends Construct {
         new CfnOutput(this, 'CloudFrontUrl', {
             value: distribution.distributionDomainName,
         })
-
     }
 }
