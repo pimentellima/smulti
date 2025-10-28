@@ -59,7 +59,9 @@ export default function SubmitLinksForm() {
             },
             {
                 onSuccess: (data) => {
-                    setRequestId(data.requestId)
+                    if (requestId) {
+                        setRequestId(data.requestId)
+                    }
                     setInputValue('')
                 },
             },
@@ -85,14 +87,7 @@ export default function SubmitLinksForm() {
                         variant="secondary"
                         className="md:rounded-l-none rounded-l-md"
                     >
-                        {createJobs.isPending ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {formDictionary[locale].processing}
-                            </>
-                        ) : (
-                            formDictionary[locale].submitButton
-                        )}
+                        {formDictionary[locale].submitButton}
                     </Button>
                 </div>
                 <div className="text-xs text-muted-foreground">
