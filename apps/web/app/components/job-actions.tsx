@@ -15,11 +15,11 @@ import { Button } from './ui/button'
 
 const dictionary = {
     'en-US': {
-        processing: 'Processing...',
+        processing: 'Processing',
         'try-again': 'Try Again',
     },
     'pt-BR': {
-        processing: 'Processando...',
+        processing: 'Processando',
         'try-again': 'Tentar novamente',
     },
 }
@@ -35,7 +35,7 @@ export default function JobActions({
     const jobId = initialJobData.id
     const { data: job } = useJob(initialJobData)
 
-    const { mutate: retryProcessing } = useRetryJob()
+    const { mutate: retryJob } = useRetryJob(initialJobData.id)
 
     const isProcessing = isJobProcessing(job?.status)
     const downloadUrl = getJobDownloadUrl(job, formatId)
@@ -47,16 +47,16 @@ export default function JobActions({
                 <Button
                     disabled
                     variant="outline"
-                    className="justify-start w-min sm:w-44"
+                    className="justify-between w-min sm:w-44"
                 >
-                    <LoaderCircle className="animate-spin" />
                     <span className="hidden sm:flex items-center gap-2">
                         {dictionary[locale]['processing']}
                     </span>
+                    <LoaderCircle className="animate-spin" />
                 </Button>
             ) : isError ? (
                 <Button
-                    onClick={() => retryProcessing(jobId)}
+                    onClick={() => retryJob()}
                     variant="destructive"
                     className="justify-start w-min sm:w-44 "
                 >
