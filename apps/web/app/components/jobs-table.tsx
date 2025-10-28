@@ -56,7 +56,7 @@ export function JobsTable() {
                 accessorKey: 'actions',
                 id: 'actions',
                 header: dictionary.actions,
-                cell: ({ row }) => <JobActions jobId={row.original.id} />,
+                cell: ({ row }) => <JobActions initialJobData={row.original} />,
             },
             {
                 accessorKey: 'title',
@@ -80,7 +80,7 @@ export function JobsTable() {
     )
 
     const table = useReactTable({
-        data: jobs || [],
+        data: jobs ?? [],
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
@@ -90,6 +90,8 @@ export function JobsTable() {
             },
         },
     })
+
+    if (!jobs) return null
 
     return (
         <div className="space-y-4 w-full my-4 space-x-1 ">
@@ -164,7 +166,7 @@ export function JobsTable() {
                         jobs?.length || 0,
                     )}
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-1">
                     <Button
                         variant="outline"
                         size="sm"

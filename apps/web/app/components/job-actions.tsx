@@ -1,13 +1,12 @@
-import { Format } from '@/common/types'
+import { Format, JobWithFormats } from '@/common/types'
 import {
     getJobDownloadUrl,
     isJobProcessing,
     isJobProcessingError,
 } from '@/common/utils'
-import { useRetryJob } from '@/hooks/jobs'
+import { useJob, useRetryJob } from '@/hooks/jobs'
 import { useLocale } from '@/hooks/locale'
-import { useRealtimeJob } from '@/hooks/realtime-job'
-import { XIcon } from 'lucide-react'
+import { LoaderCircle, XIcon } from 'lucide-react'
 import { useState } from 'react'
 import CancelJobButton from './cancel-job-button'
 import DownloadJobButton from './download-job-button'
@@ -17,19 +16,24 @@ import { Button } from './ui/button'
 const dictionary = {
     'en-US': {
         processing: 'Processing...',
-        'error-processing': 'Error processing',
+        'try-again': 'Try Again',
     },
     'pt-BR': {
         processing: 'Processando...',
-        'error-processing': 'Erro ao processar',
+        'try-again': 'Tentar novamente',
     },
 }
 
-export default function JobActions({ jobId }: { jobId: string }) {
+export default function JobActions({
+    initialJobData,
+}: {
+    initialJobData: JobWithFormats
+}) {
     const locale = useLocale()
     const [selectedFormat, setSelectedFormat] = useState<Format | null>(null)
     const formatId = selectedFormat?.id
-    const { data: job } = useRealtimeJob(jobId)
+    const jobId = initialJobData.id
+    const { data: job } = useJob(initialJobData)
 
     const { mutate: retryProcessing } = useRetryJob()
 
@@ -43,21 +47,22 @@ export default function JobActions({ jobId }: { jobId: string }) {
                 <Button
                     disabled
                     variant="outline"
-                    className="justify-between w-min"
+                    className="justify-start w-min sm:w-44"
                 >
+                    <LoaderCircle className="animate-spin" />
                     <span className="hidden sm:flex items-center gap-2">
                         {dictionary[locale]['processing']}
                     </span>
                 </Button>
             ) : isError ? (
                 <Button
-                    disabled
+                    onClick={() => retryProcessing(jobId)}
                     variant="destructive"
-                    className="justify-start w-min sm:w-48"
+                    className="justify-start w-min sm:w-44 "
                 >
                     <XIcon />
                     <span className="hidden sm:flex items-center gap-2">
-                        {dictionary[locale]['error-processing']}
+                        {dictionary[locale]['try-again']}
                     </span>
                 </Button>
             ) : (
@@ -71,9 +76,6 @@ export default function JobActions({ jobId }: { jobId: string }) {
             )}
             <DownloadJobButton
                 isFormatSelected={!!formatId}
-                onClickRetry={() => retryProcessing(jobId)}
-                isProcessing={isProcessing ?? false}
-                isError={isError ?? false}
                 downloadUrl={downloadUrl}
             />
             <CancelJobButton jobId={jobId} />

@@ -9,7 +9,6 @@ export default function CancelJobButton({ jobId }: { jobId: string }) {
 
     return (
         <Button
-            size="icon"
             disabled={isPending}
             title={dictionary.actions.cancel}
             onClick={() => mutate(jobId)}
