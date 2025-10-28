@@ -8,17 +8,13 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from '@/components/ui/accordion'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
 import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
-    CardTitle,
+    CardTitle
 } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { getJobsByRequestId } from '@/core/api'
 import useDictionary from '@/hooks/dictionary'
 import {
@@ -27,7 +23,6 @@ import {
     QueryClient,
 } from '@tanstack/react-query'
 import { Clock, Download, Music, Shield } from 'lucide-react'
-import { useState } from 'react'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
 export function meta({}: any) {
     return [

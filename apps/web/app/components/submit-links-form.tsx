@@ -1,12 +1,11 @@
-import { useCreateJobs } from '../hooks/jobs'
-import { Loader2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useLocale } from '../hooks/locale'
-import { ApiError } from '@/common/errors'
+import { Loader2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
+import { useCreateJobs } from '../hooks/jobs'
+import { useLocale } from '../hooks/locale'
 
 const formDictionary = {
     'en-US': {
@@ -37,11 +36,13 @@ export default function SubmitLinksForm() {
         [inputValue],
     )
     const createJobs = useCreateJobs()
-    const [params, setParams] = useSearchParams()
+    const navigate = useNavigate()
+    const [params] = useSearchParams()
     const requestId = params.get('requestId')
 
     const setRequestId = (id: string) => {
-        setParams({ requestId: id })
+        const params = new URLSearchParams(window.location.search)
+        navigate(`/${locale}?${params.toString()}`)
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
