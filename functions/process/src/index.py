@@ -51,6 +51,7 @@ def extract_job_info(video_url):
 
     return {
         "title": info.get("title"),
+        "thumbnail": info.get("thumbnail"),
         "url": video_url,
         "formats": formats
     }
@@ -82,8 +83,8 @@ def handler(event, context=None):
                 job_data = extract_job_info(video_url)
                 
                 cur.execute(
-                    "UPDATE jobs SET title = %s, status = %s WHERE id = %s",
-                    (job_data["title"], 'finished-processing', job_id)
+                    "UPDATE jobs SET title = %s, status = %s, thumbnail_url = %s WHERE id = %s",
+                    (job_data["title"], 'finished-processing', job_data["thumbnail"], job_id)
                 )
                 
                 for format_data in job_data["formats"]:
