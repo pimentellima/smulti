@@ -17,20 +17,15 @@ import {
 } from '@/components/ui/table'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { useLocale } from '../hooks/locale'
-
-type JobFormatInfo = {
-    jobId: string
-    formatId: string
-}
-
-interface LinksTableProps {
-    data: JobWithFormats[]
-    columns: ColumnDef<JobWithFormats>[]
-    isLoading: boolean
-}
+import { useMemo } from 'react'
+import { useJobs } from '@/hooks/jobs'
+import { useSearchParams } from 'react-router'
+import JobActions from './job-actions'
 
 const tableDictionary = {
     'en-US': {
+        title: 'Title',
+        actions: 'Actions',
         noResults: 'No results.',
         pageInfo: (currentPage: number, pageCount: number, itemCount: number) =>
             `Page ${currentPage} of ${pageCount} • ${itemCount} items`,
@@ -38,6 +33,8 @@ const tableDictionary = {
         nextPage: 'Next page',
     },
     'pt-BR': {
+        title: 'Título',
+        actions: 'Ações',
         noResults: 'Nenhum resultado.',
         pageInfo: (currentPage: number, pageCount: number, itemCount: number) =>
             `Página ${currentPage} de ${pageCount} • ${itemCount} itens`,
@@ -46,12 +43,42 @@ const tableDictionary = {
     },
 }
 
-export function JobsTable({ data, columns, isLoading }: LinksTableProps) {
+export function JobsTable() {
     const locale = useLocale()
+    const [searchParams] = useSearchParams()
+    const requestId = searchParams.get('requestId')
     const dictionary = tableDictionary[locale] || tableDictionary['en-US']
+    const { data: jobs, isLoading: isLoadingJobs } = useJobs(requestId)
+
+    const columns: ColumnDef<JobWithFormats>[] = useMemo(
+        () => [
+            {
+                accessorKey: 'title',
+                header: dictionary.title,
+                cell: ({ row }) => {
+                    return (
+                        <div>
+                            <div className="font-medium truncate">
+                                {row.original.title || 'Untitled'}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                                {row.original.url}
+                            </div>
+                        </div>
+                    )
+                },
+            },
+            {
+                id: 'actions',
+                header: dictionary.actions,
+                cell: ({ row }) => <JobActions jobId={row.original.id} />,
+            },
+        ],
+        [jobs],
+    )
 
     const table = useReactTable({
-        data,
+        data: jobs || [],
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
@@ -65,7 +92,7 @@ export function JobsTable({ data, columns, isLoading }: LinksTableProps) {
     return (
         <div className="space-y-4 w-full my-4 space-x-1 ">
             <div className="rounded-md border bg-background max-w-[80vw] lg:max-w-full overflow-auto">
-                <Table >
+                <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
@@ -87,28 +114,25 @@ export function JobsTable({ data, columns, isLoading }: LinksTableProps) {
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {isLoading && (
+                        {isLoadingJobs ? (
                             <TableRow>
                                 <TableCell
                                     colSpan={columns.length}
-                                    className="h-24 text-center"
+                                    className="h-20 text-center"
                                 >
-                                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                                    <Loader2 className="animate-spin mx-auto text-muted-foreground" />
                                 </TableCell>
                             </TableRow>
-                        )}
-                        {!isLoading &&
-                            table.getRowModel().rows.length === 0 && (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={columns.length}
-                                        className="h-24 text-center"
-                                    >
-                                        {dictionary.noResults}
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        {!isLoading &&
+                        ) : table.getRowModel().rows.length === 0 ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={columns.length}
+                                    className="h-20 text-center"
+                                >
+                                    {dictionary.noResults}
+                                </TableCell>
+                            </TableRow>
+                        ) : (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}
@@ -125,7 +149,8 @@ export function JobsTable({ data, columns, isLoading }: LinksTableProps) {
                                         </TableCell>
                                     ))}
                                 </TableRow>
-                            ))}
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </div>
@@ -134,7 +159,7 @@ export function JobsTable({ data, columns, isLoading }: LinksTableProps) {
                     {dictionary.pageInfo(
                         table.getState().pagination.pageIndex + 1,
                         table.getPageCount(),
-                        data.length,
+                        jobs?.length || 0,
                     )}
                 </div>
                 <div className="flex items-center space-x-2">

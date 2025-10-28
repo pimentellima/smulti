@@ -1,5 +1,5 @@
 import { DonateButton } from '@/components/donate-button'
-import Downloader from '@/components/downloader'
+import { JobsTable } from '@/components/jobs-table'
 import { LanguageSelector } from '@/components/language-selector'
 import SubmitLinksForm from '@/components/submit-links-form'
 import {
@@ -74,7 +74,7 @@ export default function HomePage() {
                         <CardContent>
                             <SubmitLinksForm />
                             <HydrationBoundary state={dehydratedState}>
-                                <Downloader />
+                                <JobsTable />
                             </HydrationBoundary>
                         </CardContent>
                     </Card>
