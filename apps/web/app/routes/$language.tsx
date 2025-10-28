@@ -77,7 +77,7 @@ export default function HomePage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <SubmitLinksForm  />
+                            <SubmitLinksForm />
                             <HydrationBoundary state={dehydratedState}>
                                 <Downloader />
                             </HydrationBoundary>
@@ -136,16 +136,9 @@ export default function HomePage() {
                     >
                         {dictionary.faq.items.map((item, index) => (
                             <AccordionItem key={index} value={`item-${index}`}>
-                                <Button
-                                    asChild
-                                    size="lg"
-                                    className="h-14"
-                                    variant="ghost"
-                                >
-                                    <AccordionTrigger className="text-left">
-                                        {item.question}
-                                    </AccordionTrigger>
-                                </Button>
+                                <AccordionTrigger className="text-wrap text-left">
+                                    {item.question}
+                                </AccordionTrigger>
                                 <AccordionContent className="text-xs sm:text-sm">
                                     {item.answer}
                                 </AccordionContent>
@@ -183,30 +176,5 @@ function FeatureCard({
                 {description}
             </p>
         </div>
-    )
-}
-
-function LoadingSkeleton() {
-    return (
-        <Card className="max-w-5xl mx-auto">
-            <CardHeader>
-                <Skeleton className="h-8 w-64" />
-                <Skeleton className="h-4 w-full mt-2" />
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-32" />
-                    <div className="mt-6 space-y-4">
-                        <Skeleton className="h-6 w-48" />
-                        <div className="space-y-4">
-                            {[1, 2, 3].map((i) => (
-                                <Skeleton key={i} className="h-32 w-full" />
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
     )
 }
