@@ -42,7 +42,7 @@ export default function SubmitLinksForm() {
 
     const setRequestId = (id: string) => {
         const params = new URLSearchParams(window.location.search)
-        navigate(`/${locale}?${params.toString()}`)
+        navigate(`/${locale}?${params.toString()}&requestId=${id}`)
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -52,13 +52,18 @@ export default function SubmitLinksForm() {
             toast.error(formDictionary[locale].errors.emptyLinks)
             return
         }
-        const result = await createJobs.mutateAsync({
-            urls: links,
-            requestId,
-        })
-        if (result.requestId !== requestId) {
-            setRequestId(result.requestId)
-        }
+        await createJobs.mutateAsync(
+            {
+                urls: links,
+                requestId,
+            },
+            {
+                onSuccess: (data) => {
+                    setRequestId(data.requestId)
+                    setInputValue('')
+                },
+            },
+        )
     }
 
     return (
