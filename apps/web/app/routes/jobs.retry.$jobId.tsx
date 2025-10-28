@@ -20,8 +20,12 @@ export async function action({ request, params }: Route.ActionArgs) {
                 })
             }
 
-            await updateJobStatus(job.id, 'queued-processing')
-            await addJobsToProcessQueue([job.id])
+            const result = await addJobsToProcessQueue([job.id])
+            const isError = result.Failed?.map((f) => f.Id).includes(job.id)
+            await updateJobStatus(
+                job.id,
+                isError ? 'error-processing' : 'queued-processing',
+            )
         }
         throw new ApiError({
             code: 'bad_request',
