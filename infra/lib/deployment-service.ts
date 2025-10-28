@@ -52,15 +52,6 @@ export class DeploymentService extends Construct {
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
         })
 
-        // Bucket de uploads com acesso público permitido
-        const uploadsBucket = new Bucket(this, 'UploadsBucket', {
-            bucketName: process.env.S3_UPLOADS_BUCKET_NAME!,
-            removalPolicy: RemovalPolicy.DESTROY,
-            autoDeleteObjects: false,
-            publicReadAccess: true,
-            blockPublicAccess: BlockPublicAccess.BLOCK_ACLS_ONLY,
-        })
-
         // Origem CloudFront para o bucket de estáticos com acesso via OriginAccessIdentity
         const oai = new OriginAccessIdentity(
             this,
@@ -82,7 +73,6 @@ export class DeploymentService extends Construct {
             timeout: Duration.seconds(29),
             environment: {
                 S3_STATIC_BUCKET_NAME: process.env.S3_STATIC_BUCKET_NAME!,
-                S3_UPLOADS_BUCKET_NAME: process.env.S3_UPLOADS_BUCKET_NAME!,
                 DATABASE_URL: process.env.DATABASE_URL!,
                 SQS_PROCESS_QUEUE_NAME: process.env.SQS_PROCESS_QUEUE_NAME!,
                 VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL!,
@@ -95,8 +85,6 @@ export class DeploymentService extends Construct {
                 externalModules: ['@aws-sdk/*'],
             },
         })
-        // Concede permissão de leitura e escrita no uploadsBucket para a função SSR
-        uploadsBucket.grantReadWrite(ssr)
 
         // Api gateway integrada com o lambda SSR
         const httpApi = new HttpApi(this, 'SsrHttpApi', {
@@ -269,7 +257,7 @@ export class DeploymentService extends Construct {
         // Adiciona a Lambda como alvo da regra
         rule.addTarget(new LambdaFunctionTarget(cronLambda))
 
-        /// Deploy de buckets s3
+        /// Deploy de bucket s3
         new BucketDeployment(this, 'StaticAssetsBucketDeployment', {
             sources: [
                 Source.asset(resolve(__dirname, '../../apps/web/build/client')),
@@ -277,11 +265,6 @@ export class DeploymentService extends Construct {
             destinationBucket: staticAssetsBucket,
             distribution,
             distributionPaths: ['/*'],
-        })
-
-        new BucketDeployment(this, 'BucketDeployment', {
-            sources: [],
-            destinationBucket: uploadsBucket,
         })
 
         /// Outputs
