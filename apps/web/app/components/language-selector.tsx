@@ -10,7 +10,7 @@ import type { Locale } from '@/common/locale'
 import { cn } from '../lib/utils'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { useState, useTransition } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 
 interface LanguageSelectorProps {
     locale?: Locale
@@ -30,8 +30,7 @@ export function LanguageSelector() {
     const onSelectLanguage = (locale: string) => {
         startTransition(() => {
             const params = new URLSearchParams(window.location.search)
-            params.set('locale', locale)
-            navigate(`?${params.toString()}`)
+            navigate(`/${locale}?${params.toString()}`)
         })
         setOpen(false)
     }
