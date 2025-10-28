@@ -63,21 +63,21 @@ export default function SubmitLinksForm() {
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col space-y-2">
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-0">
+                <div className="flex flex-col md:flex-row gap-1 md:gap-0">
                     <Input
                         type="text"
                         placeholder={formDictionary[locale].placeholder}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         disabled={createJobs.isPending}
-                        className="h-9 rounded-r-md sm:rounded-r-none focus-visible-ring-2 sm:focus-visible:ring-0 bg-background
-                        text-sm"
+                        className="h-9 rounded-r-md md:rounded-r-none focus-visible-ring-2 
+                        md:focus-visible:ring-0 bg-background text-sm"
                     />
                     <Button
                         type="submit"
                         disabled={createJobs.isPending}
                         variant="secondary"
-                        className="sm:rounded-l-none rounded-l-md"
+                        className="md:rounded-l-none rounded-l-md"
                     >
                         {createJobs.isPending ? (
                             <>

@@ -63,9 +63,9 @@ export function JobsTable({ data, columns, isLoading }: LinksTableProps) {
     })
 
     return (
-        <div className="space-y-4 w-full my-4 space-x-1">
-            <div className="rounded-md border bg-background">
-                <Table>
+        <div className="space-y-4 w-full my-4 space-x-1 ">
+            <div className="rounded-md border bg-background max-w-[80vw] lg:max-w-full overflow-auto">
+                <Table >
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>

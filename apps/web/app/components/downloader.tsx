@@ -29,13 +29,6 @@ export default function Downloader() {
     const columns: ColumnDef<JobWithFormats>[] = useMemo(
         () => [
             {
-                id: 'actions',
-                header: dictionary.actions,
-                cell: ({ row }) => <JobActions jobId={row.original.id} />,
-                size: 25,
-                maxSize: 25,
-            },
-            {
                 accessorKey: 'title',
                 header: dictionary.title,
                 cell: ({ row }) => {
@@ -50,9 +43,11 @@ export default function Downloader() {
                         </div>
                     )
                 },
-                minSize: 700,
-                maxSize: 500,
-                size: 200,
+            },
+            {
+                id: 'actions',
+                header: dictionary.actions,
+                cell: ({ row }) => <JobActions jobId={row.original.id} />,
             },
         ],
         [jobs],
