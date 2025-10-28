@@ -207,7 +207,7 @@ export class DeploymentService extends Construct {
         // Concede permissão para a função SSR enviar mensagens para o processQueue
         processQueue.grantSendMessages(ssr)
 
-        // Deploy da função Lambda de processamento de jobs a partir de uma imagem Docker
+        // Deploy da função Lambda de processamento de jobs 
         const processFunction = new DockerImageFunction(
             this,
             'ProcessFunction',
@@ -227,6 +227,39 @@ export class DeploymentService extends Construct {
 
         // Conecta SQS a Lambda
         processFunction.addEventSource(new SqsEventSource(processQueue))
+
+          // Fila SQS para download de jobs
+        const downloadQueue = new Queue(this, 'DownloadQueue', {
+            queueName: process.env.SQS_DOWNLOAD_QUEUE_NAME,
+            visibilityTimeout: Duration.minutes(10),
+            deadLetterQueue: {
+                queue: dlq,
+                maxReceiveCount: 3,
+            },
+        })
+        // Concede permissão para a função SSR enviar mensagens para o downloadQueue
+        downloadQueue.grantSendMessages(ssr)
+
+        // Deploy da função Lambda de download de jobs 
+        const downloadFunction = new DockerImageFunction(
+            this,
+            'DownloadFunction',
+            {
+                timeout: Duration.minutes(5),
+                code: DockerImageCode.fromImageAsset(
+                    resolve(__dirname, '../../functions/download'),
+                    {
+                        file: 'Dockerfile', // caminho relativo ao diretório atual
+                    },
+                ),
+                environment: {
+                    DATABASE_URL: process.env.DATABASE_URL!,
+                },
+            },
+        )
+
+        // Conecta SQS a Lambda
+        downloadFunction.addEventSource(new SqsEventSource(downloadQueue))
 
         // Função Lambda para enfileirar jobs periodicamente
         const cronLambda = new NodejsFunction(this, 'EnqueLambda', {
