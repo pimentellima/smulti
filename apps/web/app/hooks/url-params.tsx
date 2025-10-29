@@ -1,26 +1,23 @@
-import { startTransition, useTransition } from 'react'
-import { useLocation, useParams } from 'react-router'
-import { useNavigate } from 'react-router'
+import { startTransition } from 'react'
+import { useNavigate, useParams } from 'react-router'
 
 export function useUrlParams() {
     const navigate = useNavigate()
     const { language, requestId } = useParams()
-    const location = useLocation()
-
-    // 🧠 Mantém query params ao navegar
-    const search = location.search
 
     function changeLanguage(newLanguage: string) {
-        if (!newLanguage || !requestId) return
+        if (!newLanguage) return
         startTransition(() => {
-            navigate(`/${newLanguage}/${requestId}${search}`, { replace: true })
+            navigate(`/${newLanguage}${requestId ? `/${requestId}` : ''}`, {
+                replace: true,
+            })
         })
     }
 
     function changeRequestId(newRequestId: string) {
         if (!newRequestId || !language) return
         startTransition(() => {
-            navigate(`/${language}/${newRequestId}${search}`, { replace: true })
+            navigate(`/${language}/${newRequestId}`, { replace: true })
         })
     }
 
