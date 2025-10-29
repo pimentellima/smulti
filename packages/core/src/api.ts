@@ -8,6 +8,7 @@ import {
     eq,
     inArray,
     isNotNull,
+    ne,
     not,
     or,
     sql,
@@ -63,12 +64,7 @@ export async function getDownloadByFormatId(
         })
         .from(jobsTable)
         .innerJoin(formats, eq(jobsTable.id, formats.jobId))
-        .where(
-            and(
-                eq(formats.id, formatId),
-                not(eq(jobsTable.status, 'cancelled')),
-            ),
-        )
+        .where(and(eq(formats.id, formatId), ne(jobsTable.status, 'cancelled')))
 
     return result
 }
@@ -92,7 +88,8 @@ export async function getDownloadsByRequestId(
         .where(
             and(
                 eq(jobsTable.requestId, requestId),
-                not(eq(jobsTable.status, 'cancelled')),
+                isNotNull(jobsTable.status),
+                ne(formats.downloadStatus, 'cancelled'),
                 isNotNull(formats.downloadStatus),
             ),
         )
