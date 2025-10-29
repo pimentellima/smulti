@@ -59,7 +59,7 @@ export default function SubmitLinksForm() {
             },
             {
                 onSuccess: (data) => {
-                    if (requestId) {
+                    if (!requestId) {
                         setRequestId(data.requestId)
                     }
                     setInputValue('')

@@ -18,6 +18,7 @@ export const jobStatusEnum = pgEnum('job_status', [
 ])
 
 export const downloadStatusEnum = pgEnum('download_status', [
+    'cancelled',
     'downloading',
     'error-downloading',
     'finished-downloading',
@@ -31,6 +32,7 @@ export const jobs = pgTable('jobs', {
         .references(() => requests.id, { onDelete: 'cascade' })
         .notNull(),
     url: text('url').notNull(),
+    thumbnail: text('thumbnail'),
     status: jobStatusEnum('status').notNull(),
     title: text('title'),
     createdAt: timestamp('created_at').defaultNow().notNull(),

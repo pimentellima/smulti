@@ -90,6 +90,8 @@ export const dictionary = {
     error: {
         login: 'Login failed. Please check your credentials and try again.',
         cancel_job: 'Job cancellation failed. Please try again.',
+        cancel_download: 'Download cancellation failed. Please try again.',
+        download: 'Download failed. Please try again.',
         retry_job: 'Job reprocessing failed. Please try again.',
         create_job: 'Job creation failed. Please try again.',
         default: 'An unexpected error occurred. Please try again later.',

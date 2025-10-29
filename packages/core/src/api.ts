@@ -1,6 +1,6 @@
 import { ApiError } from '@/common/errors'
-import { Job, JobWithFormats } from '@/common/types'
-import { FormatDownload, JobStatus } from '@/common/zod'
+import { FormatDownload, Job, JobWithFormats } from '@/common/types'
+import { DownloadStatus, JobStatus } from '@/common/zod'
 import { db, type DatabaseType } from '@/db/client'
 import { formats, jobs as jobsTable, requests } from '@/db/schema'
 import {
@@ -45,6 +45,58 @@ export async function getJobsByRequestId(
             not(eq(jobsTable.status, 'cancelled')),
         ),
     })
+}
+
+export async function getDownloadByFormatId(
+    formatId: string,
+): Promise<FormatDownload> {
+    const [result] = await db
+        .select({
+            id: jobsTable.id,
+            title: jobsTable.title,
+            formatId: formats.id,
+            jobId: jobsTable.id,
+            requestId: jobsTable.requestId,
+            thumbnail: jobsTable.thumbnail,
+            downloadStatus: formats.downloadStatus,
+            downloadUrl: formats.downloadUrl,
+        })
+        .from(jobsTable)
+        .innerJoin(formats, eq(jobsTable.id, formats.jobId))
+        .where(
+            and(
+                eq(formats.id, formatId),
+                not(eq(jobsTable.status, 'cancelled')),
+            ),
+        )
+
+    return result
+}
+
+export async function getDownloadsByRequestId(
+    requestId: string,
+): Promise<FormatDownload[]> {
+    const result = await db
+        .select({
+            id: jobsTable.id,
+            title: jobsTable.title,
+            formatId: formats.id,
+            jobId: jobsTable.id,
+            requestId: jobsTable.requestId,
+            thumbnail: jobsTable.thumbnail,
+            downloadStatus: formats.downloadStatus,
+            downloadUrl: formats.downloadUrl,
+        })
+        .from(jobsTable)
+        .innerJoin(formats, eq(jobsTable.id, formats.jobId))
+        .where(
+            and(
+                eq(jobsTable.requestId, requestId),
+                not(eq(jobsTable.status, 'cancelled')),
+                isNotNull(formats.downloadStatus),
+            ),
+        )
+    return result
 }
 
 export async function getRequestById(requestId: string) {
@@ -112,6 +164,17 @@ export async function updateJob(
     }
 
     return job
+}
+
+export const updateDownloadStatus = async (
+    formatId: string,
+    downloadStatus: DownloadStatus | null,
+) => {
+    return await db
+        .update(formats)
+        .set({ downloadStatus })
+        .where(eq(formats.id, formatId))
+        .returning()
 }
 
 export const updateJobStatus = async (
@@ -201,6 +264,19 @@ export async function getFormatById(formatId: string) {
             message: `Format with id ${formatId} not found`,
         })
     }
+
+    return format
+}
+
+export async function updateFormatDownloadUrl(
+    formatId: string,
+    downloadUrl: string,
+) {
+    const format = await db
+        .update(formats)
+        .set({ downloadUrl })
+        .where(eq(formats.id, formatId))
+        .returning()
 
     return format
 }

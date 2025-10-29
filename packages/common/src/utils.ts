@@ -17,7 +17,7 @@ export const isJobProcessingError = (jobStatus?: JobStatus) => {
 export function getJobDownloadUrl(job?: JobWithFormats, formatId?: string) {
     const jobFormatIndex = job?.formats?.findIndex((f) => f.id === formatId)
     if (jobFormatIndex !== -1) {
-        return job?.formats?.[jobFormatIndex].url
+        return job?.formats?.[jobFormatIndex].downloadUrl
     }
     return null
 }

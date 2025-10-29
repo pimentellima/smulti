@@ -19,6 +19,7 @@ import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-t
 import {
     DockerImageCode,
     DockerImageFunction,
+    LayerVersion,
     Runtime,
 } from 'aws-cdk-lib/aws-lambda'
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
@@ -222,7 +223,7 @@ export class DeploymentService extends Construct {
                 code: DockerImageCode.fromImageAsset(
                     resolve(__dirname, '../../functions/process'),
                     {
-                        file: 'Dockerfile', // caminho relativo ao diretório atual
+                        file: 'Dockerfile',
                     },
                 ),
                 environment: {
@@ -237,7 +238,7 @@ export class DeploymentService extends Construct {
         // Fila SQS para download de jobs
         const downloadQueue = new Queue(this, 'DownloadQueue', {
             queueName: process.env.SQS_DOWNLOAD_QUEUE_NAME,
-            visibilityTimeout: Duration.minutes(10),
+            visibilityTimeout: Duration.minutes(11),
             deadLetterQueue: {
                 queue: dlq,
                 maxReceiveCount: 3,
@@ -246,26 +247,34 @@ export class DeploymentService extends Construct {
         // Concede permissão para a função SSR enviar mensagens para o downloadQueue
         downloadQueue.grantSendMessages(ssr)
 
-        // Deploy da função Lambda de download de jobs
-        const downloadFunction = new DockerImageFunction(
+        const ffmpegLayer = LayerVersion.fromLayerVersionArn(
             this,
-            'DownloadFunction',
-            {
-                timeout: Duration.minutes(5),
-                code: DockerImageCode.fromImageAsset(
-                    resolve(__dirname, '../../functions/download'),
-                    {
-                        file: 'Dockerfile', // caminho relativo ao diretório atual
-                    },
-                ),
-                environment: {
-                    DATABASE_URL: process.env.DATABASE_URL!,
-                },
-            },
+            'FfmpegLayer',
+             'arn:aws:lambda:us-east-1:412381757672:layer:ffmpeg:1',
         )
 
+        // Deploy da função Lambda de download de jobs
+        const downloadFunction = new NodejsFunction(this, 'DownloadFunction', {
+            timeout: Duration.minutes(10),
+            handler: 'handler',
+            entry: resolve(__dirname, '../../functions/download/src/index.ts'),
+            memorySize: 512,
+            bundling: {
+                format: OutputFormat.CJS,
+                platform: 'node',
+                target: 'node20',
+            },
+            layers: [ffmpegLayer],
+            environment: {
+                DATABASE_URL: process.env.DATABASE_URL!,
+                S3_UPLOADS_BUCKET_NAME: process.env.S3_UPLOADS_BUCKET_NAME!,
+            },
+        })
         // Conecta SQS a Lambda
         downloadFunction.addEventSource(new SqsEventSource(downloadQueue))
+
+        // Dá à Lambda permissão de upload/atualização no bucket
+        uploadsBucket.grantPut(downloadFunction)
 
         // Função Lambda para enfileirar jobs periodicamente
         const cronLambda = new NodejsFunction(this, 'EnqueLambda', {

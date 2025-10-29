@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button'
-import { DownloadIcon } from 'lucide-react'
+import { DownloadIcon, Loader2Icon } from 'lucide-react'
 import { useLocale } from '../hooks/locale'
 
 interface JobDownloadButtonProps {
-    isFormatSelected: boolean
-    downloadUrl: string | null
+    isDisabled?: boolean
+    isPending?: boolean
+    onClickDownload: () => void
 }
 
 const dictionary = {
@@ -17,12 +18,20 @@ const dictionary = {
 }
 
 export default function DownloadButton({
-    isFormatSelected,
-    downloadUrl,
+    isDisabled,
+    isPending,
+    onClickDownload,
 }: JobDownloadButtonProps) {
     const locale = useLocale()
 
-    if (!isFormatSelected || !downloadUrl)
+    if (isPending)
+        return (
+            <Button variant={'outline'} disabled>
+                <Loader2Icon className="animate-spin" />
+            </Button>
+        )
+
+    if (isDisabled)
         return (
             <Button variant={'outline'} disabled>
                 <DownloadIcon className="h-4 w-4" />
@@ -30,15 +39,12 @@ export default function DownloadButton({
         )
 
     return (
-        <Button title={dictionary[locale].download} variant={'outline'} asChild>
-            <a
-                download={true}
-                target="_blank"
-                href={downloadUrl}
-                className="contents"
-            >
-                <DownloadIcon className="h-4 w-4" />
-            </a>
+        <Button
+            title={dictionary[locale].download}
+            variant={'outline'}
+            onClick={onClickDownload}
+        >
+            <DownloadIcon className="h-4 w-4" />
         </Button>
     )
 }

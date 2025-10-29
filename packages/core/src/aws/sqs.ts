@@ -23,3 +23,21 @@ export async function addJobsToProcessQueue(jobIds: string[]) {
         }),
     )
 }
+
+export async function addFormatsToDownloadQueue(formatIds: string[]) {
+    const { QueueUrl } = await client.send(
+        new GetQueueUrlCommand({
+            QueueName: process.env.SQS_DOWNLOAD_QUEUE_NAME!,
+        }),
+    )
+
+    return await client.send(
+        new SendMessageBatchCommand({
+            QueueUrl,
+            Entries: formatIds.map((id) => ({
+                MessageBody: id,
+                Id: id,
+            })),
+        }),
+    )
+}

@@ -4,14 +4,16 @@ import {
     isJobProcessing,
     isJobProcessingError,
 } from '@/common/utils'
+import { useDownloadsPopover, useStartDownload } from '@/hooks/downloads'
 import { useRetryJob } from '@/hooks/jobs'
 import { useLocale } from '@/hooks/locale'
-import { LoaderCircle, XIcon } from 'lucide-react'
+import { Loader2Icon, XIcon } from 'lucide-react'
 import { useState } from 'react'
 import CancelJobButton from './cancel-job-button'
 import DownloadButton from './download-button'
 import FormatSelector from './format-selector'
 import { Button } from './ui/button'
+import { triggerDownload } from '@/lib/utils/trigger-download'
 
 const dictionary = {
     'en-US': {
@@ -26,17 +28,39 @@ const dictionary = {
 
 export default function JobActions({
     job,
+    onClickDownload,
 }: {
     job: JobWithFormats
+    onClickDownload: () => void
 }) {
     const locale = useLocale()
+    const { setOpen: setDownloadsPopoverOpen } = useDownloadsPopover()
     const [selectedFormat, setSelectedFormat] = useState<Format | null>(null)
     const formatId = selectedFormat?.id
-    const jobId = job.id
-    const { mutate: retryJob } = useRetryJob(job.id)
+    const { mutate: retryJob } = useRetryJob(job)
+    const { mutate: startDownload, isPending: isPendingDownloadMutation } =
+        useStartDownload()
     const isProcessing = isJobProcessing(job?.status)
     const downloadUrl = getJobDownloadUrl(job, formatId)
     const isError = isJobProcessingError(job?.status)
+    const handleStartDownload = () => {
+        if (downloadUrl) {
+            triggerDownload(downloadUrl, job.title ?? 'file')
+            return
+        }
+        startDownload(
+            {
+                downloadStatus: 'waiting-to-download',
+                formatId: formatId!,
+                requestId: job.requestId,
+                thumbnail: job.thumbnail,
+                title: job.title,
+                downloadUrl: null,
+                jobId: job.id,
+            },
+            { onSuccess: () => setDownloadsPopoverOpen(true) },
+        )
+    }
 
     return (
         <div className="flex gap-1 w-min">
@@ -49,7 +73,7 @@ export default function JobActions({
                     <span className="hidden sm:flex items-center gap-2">
                         {dictionary[locale]['processing']}
                     </span>
-                    <LoaderCircle className="animate-spin" />
+                    <Loader2Icon className="animate-spin" />
                 </Button>
             ) : isError ? (
                 <Button
@@ -72,10 +96,11 @@ export default function JobActions({
                 />
             )}
             <DownloadButton
-                isFormatSelected={!!formatId}
-                downloadUrl={downloadUrl}
+                isPending={isPendingDownloadMutation}
+                isDisabled={!selectedFormat}
+                onClickDownload={handleStartDownload}
             />
-            <CancelJobButton jobId={jobId} />
+            <CancelJobButton job={job} />
         </div>
     )
 }

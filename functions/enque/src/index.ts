@@ -16,16 +16,14 @@ export const handler: Handler = async () => {
             .filter((job) => job.jobStatus === 'waiting-to-process')
             .map((job) => job.jobId)
 
+        await batchUpdateJobStatus(jobsToEnque, 'queued-processing')
         const result = await addJobsToProcessQueue(jobsToEnque)
         const erroredJobIds =
             result.Failed?.map((res) => res.Id).filter(
                 (id): id is string => !!id,
             ) || []
-        const successfulJobIds = jobsToEnque.filter(
-            (id) => !erroredJobIds.includes(id),
-        )
+
         await batchUpdateJobStatus(erroredJobIds, 'error-processing')
-        await batchUpdateJobStatus(successfulJobIds, 'processing')
 
         return {
             statusCode: 200,

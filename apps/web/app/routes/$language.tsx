@@ -56,7 +56,7 @@ export default function HomePage() {
 
     return (
         <main className="bg-card">
-            <section className="py-4 pb-14 px-2 w-full bg-linear-to-r from-[#2e2727] to-[#af2c39]">
+            <section className="py-4 pb-14 px-2 w-full bg-linear-to-r from-card-foreground/90 to-primary">
                 <div className="mx-auto flex flex-col gap-3 items-center ">
                     <div className="flex items-center gap-1">
                         <DonateButton />

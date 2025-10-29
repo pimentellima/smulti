@@ -1,4 +1,4 @@
-export async function handleApiResponse(res: Response) {
+export async function handleApiResponse<T>(res: Response): Promise<T> {
     const data = await res.json()
     if (!res.ok || data?.error) {
         const error = data?.error
@@ -10,5 +10,5 @@ export async function handleApiResponse(res: Response) {
         throw err
     }
 
-    return data
+    return data as T
 }

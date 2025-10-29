@@ -2,9 +2,10 @@ import { useCancelJob } from '@/hooks/jobs'
 import { Button } from './ui/button'
 import useDictionary from '@/hooks/dictionary'
 import { XIcon } from 'lucide-react'
+import { Job } from '@/common/types'
 
-export default function CancelJobButton({ jobId }: { jobId: string }) {
-    const { mutate, isPending } = useCancelJob(jobId)
+export default function CancelJobButton({ job }: { job: Job }) {
+    const { mutate, isPending } = useCancelJob(job)
     const dictionary = useDictionary()
 
     return (

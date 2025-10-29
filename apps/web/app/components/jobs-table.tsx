@@ -1,11 +1,4 @@
 import type { JobWithFormats } from '@/common/types'
-import {
-    flexRender,
-    getCoreRowModel,
-    getPaginationRowModel,
-    useReactTable,
-    type ColumnDef,
-} from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import {
     Table,
@@ -15,11 +8,19 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
-import { useLocale } from '../hooks/locale'
-import { useMemo } from 'react'
-import { useJobs } from '@/hooks/jobs'
+import { useJobsByRequestId } from '@/hooks/jobs'
+import {
+    flexRender,
+    getCoreRowModel,
+    getPaginationRowModel,
+    useReactTable,
+    type ColumnDef,
+} from '@tanstack/react-table'
+import { ChevronLeft, ChevronRight, Loader2Icon } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { useLocale } from '../hooks/locale'
+import DownloadsPopover from './downloads-popover'
 import JobActions from './job-actions'
 
 const tableDictionary = {
@@ -48,7 +49,9 @@ export function JobsTable() {
     const [searchParams] = useSearchParams()
     const requestId = searchParams.get('requestId')
     const dictionary = tableDictionary[locale] || tableDictionary['en-US']
-    const { data: jobs, isLoading: isLoadingJobs } = useJobs(requestId)
+    const { data: jobs, isLoading: isLoadingJobs } =
+        useJobsByRequestId(requestId)
+    const [downloadsPopoverOpen, setDownloadsPopoverOpen] = useState(false)
 
     const columns: ColumnDef<JobWithFormats>[] = useMemo(
         () => [
@@ -56,7 +59,14 @@ export function JobsTable() {
                 accessorKey: 'actions',
                 id: 'actions',
                 header: dictionary.actions,
-                cell: ({ row }) => <JobActions job={row.original} />,
+                cell: ({ row }) => (
+                    <JobActions
+                        onClickDownload={() => {
+                            setDownloadsPopoverOpen(true)
+                        }}
+                        job={row.original}
+                    />
+                ),
             },
             {
                 accessorKey: 'title',
@@ -103,101 +113,108 @@ export function JobsTable() {
     if (!jobs) return null
 
     return (
-        <div className="space-y-4 w-full my-4 space-x-1 ">
-            <div className="rounded-md border bg-background max-w-[80vw] md:max-w-full overflow-auto">
-                <Table>
-                    <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => (
-                                    <TableHead
-                                        key={header.id}
-                                        style={{ width: header.getSize() }}
-                                    >
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                  header.column.columnDef
-                                                      .header,
-                                                  header.getContext(),
-                                              )}
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                        ))}
-                    </TableHeader>
-                    <TableBody>
-                        {isLoadingJobs ? (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={columns.length}
-                                    className="h-20 text-center"
-                                >
-                                    <Loader2 className="animate-spin mx-auto text-muted-foreground" />
-                                </TableCell>
-                            </TableRow>
-                        ) : table.getRowModel().rows.length === 0 ? (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={columns.length}
-                                    className="h-20 text-center"
-                                >
-                                    {dictionary.noResults}
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            table.getRowModel().rows.map((row) => (
-                                <TableRow
-                                    key={row.id}
-                                    data-state={
-                                        row.getIsSelected() && 'selected'
-                                    }
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext(),
-                                            )}
-                                        </TableCell>
+        <>
+            <div className="absolute top-4 right-4">
+                <DownloadsPopover />
+            </div>
+            <div className="space-y-4 w-full my-4 space-x-1 ">
+                <div className="rounded-md border bg-background max-w-[80vw] md:max-w-full overflow-auto">
+                    <Table>
+                        <TableHeader>
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <TableRow key={headerGroup.id}>
+                                    {headerGroup.headers.map((header) => (
+                                        <TableHead
+                                            key={header.id}
+                                            style={{ width: header.getSize() }}
+                                        >
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(
+                                                      header.column.columnDef
+                                                          .header,
+                                                      header.getContext(),
+                                                  )}
+                                        </TableHead>
                                     ))}
                                 </TableRow>
-                            ))
+                            ))}
+                        </TableHeader>
+                        <TableBody>
+                            {isLoadingJobs ? (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={columns.length}
+                                        className="h-20 text-center"
+                                    >
+                                        <Loader2Icon className="animate-spin mx-auto text-muted-foreground" />
+                                    </TableCell>
+                                </TableRow>
+                            ) : table.getRowModel().rows.length === 0 ? (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={columns.length}
+                                        className="h-20 text-center"
+                                    >
+                                        {dictionary.noResults}
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                table.getRowModel().rows.map((row) => (
+                                    <TableRow
+                                        key={row.id}
+                                        data-state={
+                                            row.getIsSelected() && 'selected'
+                                        }
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id}>
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext(),
+                                                )}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+                <div className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">
+                        {dictionary.pageInfo(
+                            table.getState().pagination.pageIndex + 1,
+                            table.getPageCount(),
+                            jobs?.length || 0,
                         )}
-                    </TableBody>
-                </Table>
-            </div>
-            <div className="flex items-center justify-between">
-                <div className="text-xs text-muted-foreground">
-                    {dictionary.pageInfo(
-                        table.getState().pagination.pageIndex + 1,
-                        table.getPageCount(),
-                        jobs?.length || 0,
-                    )}
-                </div>
-                <div className="flex items-center gap-1">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                        <span className="sr-only">
-                            {dictionary.previousPage}
-                        </span>
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                        <span className="sr-only">{dictionary.nextPage}</span>
-                    </Button>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                            <span className="sr-only">
+                                {dictionary.previousPage}
+                            </span>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                            <span className="sr-only">
+                                {dictionary.nextPage}
+                            </span>
+                        </Button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     )
 }

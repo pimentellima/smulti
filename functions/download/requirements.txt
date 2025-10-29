@@ -1,5 +1,0 @@
-psycopg2-binary
-yt-dlp
-ffmpeg
-boto3
-requests

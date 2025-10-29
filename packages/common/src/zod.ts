@@ -28,10 +28,3 @@ export const convertSchema = z.object({
 })
 
 export type CreateJobsSchema = z.infer<typeof createJobsSchema>
-
-export type FormatDownload = {
-    title: string
-    thumbnail?: string
-    downloadStatus: DownloadStatus
-    downloadUrl?: string
-}

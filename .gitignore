@@ -25,3 +25,4 @@ node_modules
 .github/instructions/nx.instructions.md
 cdk.out
 cookies.txt
+dist/

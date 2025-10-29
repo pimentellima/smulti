@@ -1,5 +1,20 @@
 {
     "name": "@smulti/download-function",
+    "version": "1.0.0",
     "private": true,
-    "type": "module"
+    "type": "module",
+    "scripts": {
+        "check-types": "tsc --noEmit",
+        "build": "esbuild src/index.ts --bundle --outdir=dist --format=cjs --minify=false --target=node22 --sourcemap --platform=node"
+    },
+    "dependencies": {
+        "@smulti/common": "*",
+        "@smulti/core": "*",
+        "aws-lambda": "^1.0.7",
+        "aws-sdk": "^2.1692.0"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.114",
+        "esbuild": "^0.25.11"
+    }
 }

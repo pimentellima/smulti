@@ -83,7 +83,7 @@ def handler(event, context=None):
                 job_data = extract_job_info(video_url)
                 
                 cur.execute(
-                    "UPDATE jobs SET title = %s, status = %s, thumbnail_url = %s WHERE id = %s",
+                    "UPDATE jobs SET title = %s, status = %s, thumbnail = %s WHERE id = %s",
                     (job_data["title"], 'finished-processing', job_data["thumbnail"], job_id)
                 )
                 

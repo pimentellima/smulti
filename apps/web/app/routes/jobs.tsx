@@ -31,16 +31,13 @@ export async function action({ request }: Route.ActionArgs) {
                 .slice(0, CONCURRENT_JOB_LIMIT - itemsInQueue)
                 .map((job) => job.id)
 
+            await batchUpdateJobStatus(jobsToProcess, 'queued-processing')
             const result = await addJobsToProcessQueue(jobsToProcess)
             const erroredJobIds =
                 result.Failed?.map((res) => res.Id).filter(
                     (id): id is string => !!id,
                 ) || []
-            const successfulJobIds = jobsToProcess.filter(
-                (id) => !erroredJobIds.includes(id),
-            )
             await batchUpdateJobStatus(erroredJobIds, 'error-processing')
-            await batchUpdateJobStatus(successfulJobIds, 'processing')
 
             return { requestId }
         }
