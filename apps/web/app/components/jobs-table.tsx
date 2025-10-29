@@ -47,7 +47,6 @@ const tableDictionary = {
 export function JobsTable() {
     const locale = useLocale()
     const { requestId } = useUrlParams()
-    console.log({ requestId })
     const dictionary = tableDictionary[locale] || tableDictionary['en-US']
     const { data: jobs, isLoading: isLoadingJobs } = useJobsByRequestId(
         requestId!,
