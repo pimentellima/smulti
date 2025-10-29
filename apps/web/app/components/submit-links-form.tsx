@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { useCreateJobs } from '../hooks/jobs'
 import { useLocale } from '../hooks/locale'
+import { useUrlParams } from '@/hooks/url-params'
 
 const formDictionary = {
     'en-US': {
@@ -36,14 +37,7 @@ export default function SubmitLinksForm() {
         [inputValue],
     )
     const createJobs = useCreateJobs()
-    const navigate = useNavigate()
-    const [params] = useSearchParams()
-    const requestId = params.get('requestId')
-
-    const setRequestId = (id: string) => {
-        const params = new URLSearchParams(window.location.search)
-        navigate(`/${locale}?${params.toString()}&requestId=${id}`)
-    }
+    const { requestId, changeRequestId } = useUrlParams()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -60,7 +54,7 @@ export default function SubmitLinksForm() {
             {
                 onSuccess: (data) => {
                     if (!requestId) {
-                        setRequestId(data.requestId)
+                        changeRequestId(data.requestId)
                     }
                     setInputValue('')
                 },

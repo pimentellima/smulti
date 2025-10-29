@@ -9,6 +9,7 @@ import {
     TableRow,
 } from '@/components/ui/table'
 import { useJobsByRequestId } from '@/hooks/jobs'
+import { useUrlParams } from '@/hooks/url-params'
 import {
     flexRender,
     getCoreRowModel,
@@ -18,7 +19,6 @@ import {
 } from '@tanstack/react-table'
 import { ChevronLeft, ChevronRight, Loader2Icon } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router'
 import { useLocale } from '../hooks/locale'
 import DownloadsPopover from './downloads-popover'
 import JobActions from './job-actions'
@@ -46,11 +46,12 @@ const tableDictionary = {
 
 export function JobsTable() {
     const locale = useLocale()
-    const [searchParams] = useSearchParams()
-    const requestId = searchParams.get('requestId')
+    const { requestId } = useUrlParams()
+    console.log({ requestId })
     const dictionary = tableDictionary[locale] || tableDictionary['en-US']
-    const { data: jobs, isLoading: isLoadingJobs } =
-        useJobsByRequestId(requestId)
+    const { data: jobs, isLoading: isLoadingJobs } = useJobsByRequestId(
+        requestId!,
+    )
     const [downloadsPopoverOpen, setDownloadsPopoverOpen] = useState(false)
 
     const columns: ColumnDef<JobWithFormats>[] = useMemo(

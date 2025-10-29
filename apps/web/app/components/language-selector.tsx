@@ -1,3 +1,4 @@
+import type { Locale } from '@/common/locale'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -5,12 +6,11 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useLocale } from '../hooks/locale'
-import type { Locale } from '@/common/locale'
-import { cn } from '../lib/utils'
+import { useUrlParams } from '@/hooks/url-params'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { useState, useTransition } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useLocale } from '../hooks/locale'
+import { cn } from '../lib/utils'
 
 interface LanguageSelectorProps {
     locale?: Locale
@@ -23,15 +23,12 @@ const languages = [
 
 export function LanguageSelector() {
     const locale = useLocale()
-    const navigate = useNavigate()
     const [isPending, startTransition] = useTransition()
     const [open, setOpen] = useState(false)
+    const { changeLanguage } = useUrlParams()
 
     const onSelectLanguage = (locale: string) => {
-        startTransition(() => {
-            const params = new URLSearchParams(window.location.search)
-            navigate(`/${locale}?${params.toString()}`)
-        })
+        changeLanguage(locale)
         setOpen(false)
     }
 

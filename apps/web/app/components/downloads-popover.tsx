@@ -6,14 +6,14 @@ import {
     useStartDownload,
 } from '@/hooks/downloads'
 import { useLocale } from '@/hooks/locale'
-import { DownloadIcon, Loader2Icon, LoaderIcon, XIcon } from 'lucide-react'
-import { useSearchParams } from 'react-router'
+import { useUrlParams } from '@/hooks/url-params'
+import { supabase } from '@/lib/supabase/client'
+import { triggerDownload } from '@/lib/utils/trigger-download'
+import { useQueryClient } from '@tanstack/react-query'
+import { DownloadIcon, LoaderIcon, XIcon } from 'lucide-react'
+import { useEffect } from 'react'
 import { Button } from './ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
-import { useEffect } from 'react'
-import { supabase } from '@/lib/supabase/client'
-import { useQueryClient } from '@tanstack/react-query'
-import { triggerDownload } from '@/lib/utils/trigger-download'
 
 const dictionary = {
     'pt-BR': {
@@ -43,8 +43,7 @@ const dictionary = {
 }
 
 export default function DownloadsPopover() {
-    const [params] = useSearchParams()
-    const requestId = params.get('requestId')!
+    const { requestId } = useUrlParams()
     const { open, setOpen } = useDownloadsPopover()
     const locale = useLocale()
     const { data: downloads } = useDownloadsByRequestId(requestId)
