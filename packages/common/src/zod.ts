@@ -3,7 +3,14 @@ import { downloadStatusEnum, jobStatusEnum } from '@/db/schema'
 
 export const createJobsSchema = z.object({
     requestId: z.string().uuid().nullish(),
-    urls: z.array(z.string().url()),
+    urls: z.array(
+        z
+            .string()
+            .regex(
+                /^https?:\/\/(?:www\.)?(?:m\.)?(?:youtube\.com\/(?:(?:watch\?(?:.*&)?v=)|(?:embed\/)|(?:v\/))|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[?&][^\s]*)?$/,
+                { message: 'Invalid youtube url' },
+            ),
+    ),
 })
 
 export const statusEnum = z.enum(jobStatusEnum.enumValues)

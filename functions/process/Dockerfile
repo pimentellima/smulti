@@ -1,12 +1,12 @@
-FROM public.ecr.aws/lambda/python:3.11
+FROM python:3.11-alpine
 
-RUN yum install -y postgresql-devel gcc python3-devel
+RUN apk add --no-cache gcc musl-dev postgresql-dev
 
-WORKDIR ${LAMBDA_TASK_ROOT}
-COPY src/index.py index.py
+WORKDIR /app
+COPY src/ .
 COPY requirements.txt .
 COPY cookies.txt .
 
-RUN pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
+RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["index.handler"]
+CMD ["python", "index.py"]

@@ -14,8 +14,22 @@ import {
     ViewerProtocolPolicy,
 } from 'aws-cdk-lib/aws-cloudfront'
 import { HttpOrigin, S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins'
+import {
+    Instance,
+    InstanceClass,
+    InstanceSize,
+    InstanceType,
+    MachineImage,
+    Peer,
+    Port,
+    SecurityGroup,
+    SubnetType,
+    Vpc,
+} from 'aws-cdk-lib/aws-ec2'
+import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets'
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
 import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets'
+import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
 import {
     DockerImageCode,
     DockerImageFunction,
@@ -24,6 +38,7 @@ import {
 } from 'aws-cdk-lib/aws-lambda'
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs'
+import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs'
 import {
     AaaaRecord,
     ARecord,
@@ -214,67 +229,77 @@ export class DeploymentService extends Construct {
         // Concede permissão para a função SSR enviar mensagens para o processQueue
         processQueue.grantSendMessages(ssr)
 
-        // Deploy da função Lambda de processamento de jobs
-        const processFunction = new DockerImageFunction(
+        const processDockerImage = new DockerImageAsset(
             this,
-            'ProcessFunction',
+            'ProcessDockerImage',
             {
-                timeout: Duration.minutes(5),
-                code: DockerImageCode.fromImageAsset(
-                    resolve(__dirname, '../../functions/process'),
-                    {
-                        file: 'Dockerfile',
-                    },
-                ),
-                environment: {
-                    DATABASE_URL: process.env.DATABASE_URL!,
-                },
+                directory: resolve(__dirname, '../../functions/process'),
             },
         )
-
-        // Conecta SQS a Lambda
-        processFunction.addEventSource(new SqsEventSource(processQueue))
-
-        // Fila SQS para download de jobs
-        const downloadQueue = new Queue(this, 'DownloadQueue', {
-            queueName: process.env.SQS_DOWNLOAD_QUEUE_NAME,
-            visibilityTimeout: Duration.minutes(11),
-            deadLetterQueue: {
-                queue: dlq,
-                maxReceiveCount: 3,
-            },
-        })
-        // Concede permissão para a função SSR enviar mensagens para o downloadQueue
-        downloadQueue.grantSendMessages(ssr)
-
-        const ffmpegLayer = LayerVersion.fromLayerVersionArn(
+        const processInstanceVpc = new Vpc(this, 'Vpc', { maxAzs: 2 })
+        const processInstanceLogGroup = new LogGroup(
             this,
-            'FfmpegLayer',
-             'arn:aws:lambda:us-east-1:412381757672:layer:ffmpeg:1',
+            'ProcessInstanceLogGroup',
+            {
+                logGroupName: '/aws/ec2/ProcessEC2Instance',
+                retention: RetentionDays.ONE_WEEK,
+                removalPolicy: RemovalPolicy.DESTROY,
+            },
         )
 
-        // Deploy da função Lambda de download de jobs
-        const downloadFunction = new NodejsFunction(this, 'DownloadFunction', {
-            timeout: Duration.minutes(10),
-            handler: 'handler',
-            entry: resolve(__dirname, '../../functions/download/src/index.ts'),
-            memorySize: 512,
-            bundling: {
-                format: OutputFormat.CJS,
-                platform: 'node',
-                target: 'node20',
-            },
-            layers: [ffmpegLayer],
-            environment: {
-                DATABASE_URL: process.env.DATABASE_URL!,
-                S3_UPLOADS_BUCKET_NAME: process.env.S3_UPLOADS_BUCKET_NAME!,
-            },
+        const ec2Role = new Role(this, 'EC2SSMRole', {
+            assumedBy: new ServicePrincipal('ec2.amazonaws.com'),
         })
-        // Conecta SQS a Lambda
-        downloadFunction.addEventSource(new SqsEventSource(downloadQueue))
+        ec2Role.addManagedPolicy(
+            ManagedPolicy.fromAwsManagedPolicyName(
+                'AmazonSSMManagedInstanceCore',
+            ),
+        )
 
-        // Dá à Lambda permissão de upload/atualização no bucket
-        uploadsBucket.grantPut(downloadFunction)
+        ec2Role.addManagedPolicy(
+            ManagedPolicy.fromAwsManagedPolicyName(
+                'AmazonEC2ContainerRegistryReadOnly',
+            ),
+        )
+        ec2Role.addManagedPolicy(
+            ManagedPolicy.fromAwsManagedPolicyName('CloudWatchLogsFullAccess'),
+        )
+        const sg = new SecurityGroup(this, 'MyEC2SG', {
+            vpc: processInstanceVpc,
+            description: 'Allow HTTP, SSH access',
+            allowAllOutbound: true,
+        })
+        sg.addIngressRule(Peer.anyIpv4(), Port.tcp(22), 'SSH')
+        sg.addIngressRule(Peer.anyIpv4(), Port.tcp(80), 'HTTP')
+        const processInstance = new Instance(this, 'ProcessEC2Instance', {
+            vpc: processInstanceVpc,
+            instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.SMALL),
+            machineImage: MachineImage.latestAmazonLinux2(),
+            role: ec2Role,
+            securityGroup: sg,
+            keyName: 'process-ec2-key',
+            vpcSubnets: { subnetType: SubnetType.PUBLIC },
+            associatePublicIpAddress: true,
+        })
+        processDockerImage.repository.grantPull(processInstance.role)
+        processQueue.grantConsumeMessages(processInstance)
+        processQueue.grantPurge(processInstance)
+        processInstance.userData.addCommands(
+            '#!/bin/bash',
+            'yum update -y',
+            'amazon-linux-extras install docker -y',
+            'service docker start',
+            'usermod -a -G docker ec2-user',
+            `aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${processDockerImage.repository.repositoryUri}`,
+            `docker run -d -t \
+                -e DATABASE_URL=${process.env.DATABASE_URL || ''} \
+                -e SQS_QUEUE_URL=${processQueue.queueUrl || ''} \
+                --log-driver=awslogs \
+                --log-opt awslogs-group=${processInstanceLogGroup.logGroupName} \
+                --log-opt awslogs-region=${process.env.AWS_REGION} \
+                --log-opt awslogs-stream=container-1 \
+                ${processDockerImage.imageUri}`,
+        )
 
         // Função Lambda para enfileirar jobs periodicamente
         const cronLambda = new NodejsFunction(this, 'EnqueLambda', {
@@ -324,6 +349,10 @@ export class DeploymentService extends Construct {
 
         new CfnOutput(this, 'CloudFrontUrl', {
             value: distribution.distributionDomainName,
+        })
+
+        new CfnOutput(this, 'LogGroupName', {
+            value: processInstanceLogGroup.logGroupName,
         })
     }
 }

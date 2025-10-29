@@ -37,29 +37,16 @@ export default function JobActions({
     const { setOpen: setDownloadsPopoverOpen } = useDownloadsPopover()
     const [selectedFormat, setSelectedFormat] = useState<Format | null>(null)
     const formatId = selectedFormat?.id
-    const { mutate: retryJob } = useRetryJob(job)
+    const { mutate: retryJob } = useRetryJob()
     const { mutate: startDownload, isPending: isPendingDownloadMutation } =
         useStartDownload()
     const isProcessing = isJobProcessing(job?.status)
     const downloadUrl = getJobDownloadUrl(job, formatId)
     const isError = isJobProcessingError(job?.status)
+    console.log(job)
     const handleStartDownload = () => {
-        if (downloadUrl) {
-            triggerDownload(downloadUrl, job.title ?? 'file')
-            return
-        }
-        startDownload(
-            {
-                downloadStatus: 'waiting-to-download',
-                formatId: formatId!,
-                requestId: job.requestId,
-                thumbnail: job.thumbnail,
-                title: job.title,
-                downloadUrl: null,
-                jobId: job.id,
-            },
-            { onSuccess: () => setDownloadsPopoverOpen(true) },
-        )
+        triggerDownload(downloadUrl, job.title ?? 'file')
+        return
     }
 
     return (
@@ -77,8 +64,8 @@ export default function JobActions({
                 </Button>
             ) : isError ? (
                 <Button
-                    onClick={() => retryJob()}
-                    variant="destructive"
+                    onClick={() => retryJob(job)}
+                    variant="outline"
                     className="justify-start w-min sm:w-44 "
                 >
                     <XIcon />
@@ -96,7 +83,6 @@ export default function JobActions({
                 />
             )}
             <DownloadButton
-                isPending={isPendingDownloadMutation}
                 isDisabled={!selectedFormat}
                 onClickDownload={handleStartDownload}
             />

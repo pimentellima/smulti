@@ -54,37 +54,77 @@ export function useCreateJobs() {
                     body: JSON.stringify(jobs),
                 }),
             ),
-        onError: () => toast.error(dictionary.error.create_job),
-        onSuccess: async (data, variables, _, context) =>
-            context.client.invalidateQueries({
-                queryKey: ['jobs', { requestId: data.requestId }],
-            }),
+        onMutate: async (job, context) => {
+            if (job.requestId) {
+                await context.client.cancelQueries({
+                    queryKey: ['jobs', { requestId: job.requestId }],
+                })
+
+                const previousJobs = context.client.getQueryData([
+                    'jobs',
+                    { requestId: job.requestId },
+                ]) as JobWithFormats[]
+
+                const newJobs = job.urls.map((url) => ({
+                    createdAt: new Date(),
+                    formats: [],
+                    requestId: job.requestId,
+                    status: 'waiting-to-process' as JobStatus,
+                    thumbnail: null,
+                    title: '-',
+                    url,
+                    id: 'temp-id-' + Math.random().toString(36).substr(2, 9),
+                })) as JobWithFormats[]
+
+                context.client.setQueryData(
+                    ['jobs', { requestId: job.requestId }],
+                    [...previousJobs, ...newJobs],
+                )
+
+                return { previousJobs }
+            }
+            return { previousJobs: [] }
+        },
+        onError: (err, job, onMutateResult, context) => {
+            if (onMutateResult) {
+                context.client.setQueryData(
+                    ['jobs', { requestId: job.requestId }],
+                    onMutateResult.previousJobs,
+                )
+            }
+            toast.error(dictionary.error.create_job)
+        },
+        onSettled: (_, error, job, onMutateResult, context) => {
+            if (job.requestId) {
+                context.client.invalidateQueries({
+                    queryKey: ['jobs', { requestId: job.requestId }],
+                })
+            }
+        },
     })
 }
 
-export function useRetryJob(job: Job) {
+export function useRetryJob() {
     const dictionary = useDictionary()
-    const jobId = job.id
-    const requestId = job.requestId
 
     return useMutation({
-        mutationFn: async () =>
+        mutationFn: async (job: Job) =>
             await handleApiResponse(
-                await fetch(`/jobs/retry/${jobId}`, {
+                await fetch(`/jobs/retry/${job.id}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 }),
             ),
-        onMutate: async (_, context) => {
+        onMutate: async (job, context) => {
             await context.client.cancelQueries({
-                queryKey: ['jobs', { requestId }],
+                queryKey: ['jobs', { requestId: job.requestId }],
             })
 
             const previousJobs = context.client.getQueryData([
                 'jobs',
-                { requestId },
+                { requestId: job.requestId },
             ]) as JobWithFormats[]
 
             const newJob = {
@@ -93,37 +133,62 @@ export function useRetryJob(job: Job) {
             } as JobWithFormats
 
             context.client.setQueryData(
-                ['jobs', { requestId }],
+                ['jobs', { requestId: job.requestId }],
                 [...previousJobs.filter((j) => j.id !== job.id), newJob],
             )
 
             return { previousJobs }
         },
-        onError: (err, _, onMutateResult, context) => {
+        onError: (err, job, onMutateResult, context) => {
             if (onMutateResult) {
                 context.client.setQueryData(
-                    ['jobs', { requestId }],
+                    ['jobs', { requestId: job.requestId }],
                     onMutateResult.previousJobs,
                 )
             }
             toast.error(dictionary.error.retry_job)
         },
-        onSettled: (_, error, variables, onMutateResult, context) =>
+        onSettled: (_, error, job, onMutateResult, context) =>
             context.client.invalidateQueries({
-                queryKey: ['jobs', { requestId }],
+                queryKey: ['jobs', { requestId: job.requestId }],
             }),
     })
 }
 
-export function useCancelJob(job: Job) {
+export function useCancelJob() {
     const dictionary = useDictionary()
     return useMutation({
-        mutationFn: async () =>
+        mutationFn: async (job: Job) =>
             await fetch(`/jobs/${job.id}/cancel`, {
                 method: 'PUT',
             }),
-        onError: () => toast.error(dictionary.error.cancel_job),
-        onSuccess: async (data, variables, _, context) =>
+        onMutate: async (job, context) => {
+            await context.client.cancelQueries({
+                queryKey: ['jobs', { requestId: job.requestId }],
+            })
+
+            const previousJobs = context.client.getQueryData([
+                'jobs',
+                { requestId: job.requestId },
+            ]) as JobWithFormats[]
+
+            context.client.setQueryData(
+                ['jobs', { requestId: job.requestId }],
+                previousJobs.filter((j) => j.id !== job.id),
+            )
+
+            return { previousJobs }
+        },
+        onError: (err, job, onMutateResult, context) => {
+            if (onMutateResult) {
+                context.client.setQueryData(
+                    ['jobs', { requestId: job.requestId }],
+                    onMutateResult.previousJobs,
+                )
+            }
+            toast.error(dictionary.error.cancel_job)
+        },
+        onSettled: (_, error, job, onMutateResult, context) =>
             context.client.invalidateQueries({
                 queryKey: ['jobs', { requestId: job.requestId }],
             }),
