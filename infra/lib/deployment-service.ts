@@ -236,7 +236,7 @@ export class DeploymentService extends Construct {
                 directory: resolve(__dirname, '../../functions/process'),
             },
         )
-        const processInstanceVpc = new Vpc(this, 'Vpc', { maxAzs: 2 })
+        const processInstanceVpc = new Vpc(this, 'Vpc', { maxAzs: 1 })
         const processInstanceLogGroup = new LogGroup(
             this,
             'ProcessInstanceLogGroup',
@@ -264,22 +264,15 @@ export class DeploymentService extends Construct {
         ec2Role.addManagedPolicy(
             ManagedPolicy.fromAwsManagedPolicyName('CloudWatchLogsFullAccess'),
         )
-        const sg = new SecurityGroup(this, 'MyEC2SG', {
-            vpc: processInstanceVpc,
-            description: 'Allow HTTP, SSH access',
-            allowAllOutbound: true,
-        })
-        sg.addIngressRule(Peer.anyIpv4(), Port.tcp(22), 'SSH')
-        sg.addIngressRule(Peer.anyIpv4(), Port.tcp(80), 'HTTP')
+      
         const processInstance = new Instance(this, 'ProcessEC2Instance', {
             vpc: processInstanceVpc,
             instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.SMALL),
             machineImage: MachineImage.latestAmazonLinux2(),
             role: ec2Role,
-            securityGroup: sg,
             keyName: 'process-ec2-key',
-            vpcSubnets: { subnetType: SubnetType.PUBLIC },
-            associatePublicIpAddress: true,
+            vpcSubnets: { subnetType: SubnetType.PRIVATE_WITH_EGRESS },
+            associatePublicIpAddress: false,
         })
         processDockerImage.repository.grantPull(processInstance.role)
         processQueue.grantConsumeMessages(processInstance)
